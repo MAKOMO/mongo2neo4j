@@ -68,19 +68,25 @@ def flatten_and_cleanse(
 
 # Neo4j communication
 
+def render_value(value:Any) -> str:
+    """Render given value as str"""
+    if isinstance(value, DateTime):
+        return f"datetime('{value}')"
+    if isinstance(value, datetime.datetime):
+        value_as_isoformat_datetime:str = value.isoformat(sep='T')
+        return f"datetime('{value_as_isoformat_datetime}')"
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, (int|float)):
+        return str(value)
+    return f"'{value}'"
 
 def neo4j_output_query(query, **kwargs) -> None:
     """Outputs the given Cypher query to stdout."""
     result = query
     for key, value in kwargs.items():
         result = result.replace(
-            f'${key}',
-            (
-                f'datetime({value})'
-                if isinstance(value, (datetime.datetime|DateTime))
-                else str(value)
-            ),
-        )
+            f'${key}', render_value(value))
     print(result)
 
 
