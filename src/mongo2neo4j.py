@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from pymongo.database import Database
     from pymongo.cursor import Cursor
 
-
 # Globals
 
 attr_to_remove: list[str] = [
@@ -40,19 +39,19 @@ def apply_recursive(func: Callable[[Any], Any], obj: Any) -> Any:
     """Applies the given function recursively to all elements of the give object."""
     if isinstance(obj, dict):  # if dict, apply to each key
         return {k: apply_recursive(func, v) for k, v in obj.items()}
-    if isinstance(obj, list):  # if list, apply to each element
+    if isinstance(obj, list):  # if of type list, apply to each element
         return [apply_recursive(func, elem) for elem in obj]
     return func(obj)
 
 
 def flatten_and_cleanse(
-    dictionary: MutableMapping[str, Any],
-    parent_key: str = '',
-    separator: str = '_',
-    suppress: None | list[str] = None,
+        dictionary: MutableMapping[str, Any],
+        parent_key: str = '',
+        separator: str = '_',
+        suppress: None | list[str] = None,
 ) -> dict[str, Any]:
-    """Returns the given dictionary with sub dictionaries flattend and \
-        keys in in the suppress list removed."""
+    """Returns the given dictionary with sub dictionaries flattened and \
+        keys in the 'suppress' list removed."""
     if suppress is None:
         suppress = []
     res: dict[str, Any] = {}
@@ -68,18 +67,19 @@ def flatten_and_cleanse(
 
 # Neo4j communication
 
-def render_value(value:Any) -> str:
+def render_value(value: Any) -> str:
     """Render given value as str"""
     if isinstance(value, DateTime):
         return f"datetime('{value}')"
     if isinstance(value, datetime.datetime):
-        value_as_isoformat_datetime:str = value.isoformat(sep='T')
+        value_as_isoformat_datetime: str = value.isoformat(sep='T')
         return f"datetime('{value_as_isoformat_datetime}')"
     if isinstance(value, bool):
         return str(value).lower()
-    if isinstance(value, (int|float)):
+    if isinstance(value, (int | float)):
         return str(value)
     return f"'{value}'"
+
 
 def neo4j_output_query(query, **kwargs) -> None:
     """Outputs the given Cypher query to stdout."""
@@ -91,12 +91,13 @@ def neo4j_output_query(query, **kwargs) -> None:
 
 
 def neo4j_run_write_query(
-    session: None|Session, verbose: bool, query, **kwargs
+        session: None | Session, verbose: bool, query, **kwargs
 ) -> None:
-    """Sends the given query to Neo4j and outputs it to stdout if output_cyhper is True."""
+    """Sends the given query to Neo4j and outputs it to stdout if verbose is True."""
 
-    def work(tx): # pylint: disable=invalid-name
+    def work(tx):  # pylint: disable=invalid-name
         return tx.run(query, **kwargs)
+
     if verbose:
         neo4j_output_query(query, **kwargs)
     if session is not None:
@@ -104,15 +105,15 @@ def neo4j_run_write_query(
 
 
 def merge_node(
-    session: None|Session,
-    label: str,
-    document: dict[str, Any],
-    verbose: bool,
+        session: None | Session,
+        label: str,
+        document: dict[str, Any],
+        verbose: bool,
 ) -> None:
     """Merges <label> node defined by <document> and links it to other nodes \
         as specified by its ObjectId values"""
-    attribs:str = ''
-    relations:dict[str, Any] = {}
+    attribs: str = ''
+    relations: dict[str, Any] = {}
     if '_id' in document:
         node_id = str(document['_id'])  # ObjectId to string
         for key in document:
@@ -133,12 +134,12 @@ def merge_node(
         for key, value in relations.items():
             other_object_id = str(value)
             query = (f"MATCH (a:{label}), (b) WHERE a._id = '{node_id}' and "
-                f"b._id = '{other_object_id}' MERGE (a)-[:{key}]->(b)")
+                     f"b._id = '{other_object_id}' MERGE (a)-[:{key}]->(b)")
             neo4j_run_write_query(session, verbose, query)
 
 
 def split_attributes(
-    dictionary: dict[str, Any]
+        dictionary: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Splits the given attributes into those with primitive values and those with \
         non-primitive ones"""
@@ -146,21 +147,22 @@ def split_attributes(
     non_primitive: dict[str, Any] = {}
     for key, value in dictionary.items():
         if isinstance(value, list) and not all(
-            isinstance(e, (str|bool|int|float)) for e in value
+                isinstance(e, (str | bool | int | float)) for e in value
         ):
             non_primitive[key] = value
         else:
             primitive[key] = value
     return primitive, non_primitive
 
+
 # pylint: disable=too-many-arguments
 def process_data(
-    database: Database,
-    session: None|Session,
-    collections: set[str],
-    excluded_collections: list[str],
-    excluded_fields: list[str],
-    verbose: bool,
+        database: Database,
+        session: None | Session,
+        collections: set[str],
+        excluded_collections: list[str],
+        excluded_fields: list[str],
+        verbose: bool,
 ) -> None:
     """Transfers all <collections> of the given MongoDB <db> via the <session> to Neo4j's \
         <neo4j_db> DB excluding the <excluded_collections> and the <excluded_fields>.
@@ -170,12 +172,12 @@ def process_data(
             print(f"*** processing collection '{collection}'")
             # Establish constraints on labels
             # NOTE: the use of $ query parameters for constraint name and label
-            #       does not work here so we use Python fstring substitution
+            #       does not work here, so we use Python fstring substitution
             neo4j_run_write_query(
                 session,
                 verbose,
                 (f'CREATE CONSTRAINT {collection}_cstr IF NOT EXISTS FOR (l:{collection}) '
-                  'REQUIRE l._id IS UNIQUE'),
+                 'REQUIRE l._id IS UNIQUE'),
             )
             data: Cursor[Any] = database[collection].find()
             # remove attributes we are not interested in and flatten dicts
@@ -193,22 +195,22 @@ def process_data(
 
 # pylint: disable=too-many-locals
 def main(
-    mongo_host: str,
-    mongo_port: int,
-    mongo_db: str,
-    neo4j_host: str,
-    neo4j_port: int,
-    neo4j_user: str,
-    neo4j_password: str,
-    neo4j_db: str,
-    excluded_collections: list[str],
-    included_collections: None|list[str],
-    excluded_fields: list[str],
-    verbose: bool = False,
-    simulate: bool = False,
+        mongo_host: str,
+        mongo_port: int,
+        mongo_db: str,
+        neo4j_host: str,
+        neo4j_port: int,
+        neo4j_user: str,
+        neo4j_password: str,
+        neo4j_db: str,
+        excluded_collections: list[str],
+        included_collections: None | list[str],
+        excluded_fields: list[str],
+        verbose: bool = False,
+        simulate: bool = False,
 ) -> None:
     """The main mongo2neo4j function that takes MongoDB credential and DB name, Neo4j credentials \
-        and DB name and a sepecification which MongoDB collections and attributes should be \
+        and DB name and a specification which MongoDB collections and attributes should be \
         transferred to Neo4j, if the Cypher queries should be printed to stdout (verbose=True) \
         and if the Neo4j engine should be connected to or not (simulate=True)."""
 
@@ -235,8 +237,8 @@ def main(
         )
     else:
         driver: Driver
-        with GraphDatabase.driver( # pylint: disable=not-context-manager
-            f'neo4j://{neo4j_host}:{neo4j_port}', auth=(neo4j_user, neo4j_password)
+        with GraphDatabase.driver(  # pylint: disable=not-context-manager
+                f'neo4j://{neo4j_host}:{neo4j_port}', auth=(neo4j_user, neo4j_password)
         ) as driver:
             session: Session
             with driver.session(database=neo4j_db) as session:
@@ -251,12 +253,12 @@ def main(
 
 
 if __name__ == '__main__':
-    arg_desc:str = (
+    arg_desc: str = (
         'mongo2neo4j -- Imports objects structures generated by the ORM mongoose and '
         'stored in MongoDB into Neo4j for exploration with SemSpect'
     )
     parser = argparse.ArgumentParser(description=arg_desc)
-    parser.add_argument('-v', '--verbose', action='store_true', help='Output Cyhper')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Output Cypher')
     parser.add_argument(
         '-s', '--simulate', action='store_true', help="Don't connect to Neo4j"
     )
@@ -337,35 +339,35 @@ if __name__ == '__main__':
 
     parser.add_argument('mongo_db', help='MongoDB DB to import from')
     args = parser.parse_args()
-    requested_collections: None|list[str] = None
+    requested_collections: None | list[str] = None
     if args.included_collections is not None:
         requested_collections = []
         for c in args.included_collections:
             for s in c.split(','):
                 requested_collections.append(s)
-    args_excluded_collections:list[str] = []
+    args_excluded_collections: list[str] = []
     for c in args.excluded_collections:
         for s in c.split(','):
             args_excluded_collections.append(s)
-    args_excluded_fields:list[str] = []
+    args_excluded_fields: list[str] = []
     if args.excluded_fields is not None:
         for fields in args.excluded_fields:
             for f in fields.split(','):
                 args_excluded_fields.append(f)
 
     print(timeit.timeit(number=1, stmt=lambda:
-        main(
-            args.mongo_host,
-            args.mongo_port,
-            args.mongo_db,
-            args.neo4j_host,
-            args.neo4j_port,
-            args.neo4j_user,
-            args.neo4j_password,
-            args.neo4j_db,
-            args_excluded_collections,
-            requested_collections,
-            args_excluded_fields,
-            args.verbose,
-            args.simulate,
-        )))
+    main(
+        args.mongo_host,
+        args.mongo_port,
+        args.mongo_db,
+        args.neo4j_host,
+        args.neo4j_port,
+        args.neo4j_user,
+        args.neo4j_password,
+        args.neo4j_db,
+        args_excluded_collections,
+        requested_collections,
+        args_excluded_fields,
+        args.verbose,
+        args.simulate,
+    )))
