@@ -449,7 +449,7 @@ def main(
     # connect to MongDB
     mongo_client: MongoClient = MongoClient(mongo_host, mongo_port)
     # get MongoDB DB
-    database: Database = mongo_client[mongo_db]
+    database: 'Database' = mongo_client[mongo_db]
 
     db_collections: list[str] = database.list_collection_names()
     collections: Collections = (
