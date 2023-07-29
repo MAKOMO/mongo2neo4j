@@ -75,7 +75,7 @@ def chunker(n, iterable):
 
 
 # see https://stackoverflow.com/questions/54815892/pymongo-cursor-batch-size
-def yield_rows(cursor: Cursor[Any], chunk_size: int) -> Iterator[Items]:
+def yield_rows(cursor: 'Cursor[Any]', chunk_size: int) -> Iterator[Items]:
     """
     Generator to yield chunks from cursor
     :param cursor:
@@ -287,7 +287,7 @@ def neo4j_add_sublabel(
 
 # pylint: disable=too-many-arguments
 def process_data(
-        database: Database,
+        database: 'Database',
         session: None | Session,
         collections: Collections,
         excluded_collections: Collections,
