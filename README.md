@@ -35,4 +35,4 @@ Further configuration options are listed on calling
 # ./mongo2neo4j.py -h
 ```
 
-NOTE: *if the EPOC plugin is installed in the Neo4j DB, the `apoc.periodic.iterate` method is used to add sublabels.*
+NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Neo4j DB, the `apoc.periodic.iterate` method is used to add sublabels.*
