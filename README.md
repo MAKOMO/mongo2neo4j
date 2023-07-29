@@ -18,8 +18,7 @@ see [Python](https://python.org/)
 ### Install Python libs
 
 ```
-# pip install pymongo
-# pip install neo4j
+# pip install -r requirements.txt
 ```
 
 ### Run the importer
@@ -36,4 +35,4 @@ Further configuration options are listed on calling
 # ./mongo2neo4j.py -h
 ```
 
-NOTE: *if the EPOC plugin is installed in the Neo4j DB, the fast `apoc.periodic.iterate` method is used to add sublabels.*
+NOTE: *if the EPOC plugin is installed in the Neo4j DB, the `apoc.periodic.iterate` method is used to add sublabels.*
