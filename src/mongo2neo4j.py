@@ -399,9 +399,6 @@ def process_data(
                 # apoc plugin not installed
                 pass
         sub_label_specs:dict[str, list[SubSpec]] = {}
-#        => value as sublabel if type bool or if the spec is the only non-bool spec of the label
-#        => otherwise the discriminator and value are used as sublabels
-#        => string values are split at # and yield potentially further sublabels
         # extract distinct values and type per sublabel item and associate it with label in sub_label_spec
         for (label, discriminator) in sublabels:
             # distinct values, without None and the empty string
