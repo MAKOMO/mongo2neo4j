@@ -20,7 +20,7 @@ import datetime
 from collections.abc import MutableMapping, MutableSequence, Callable, Iterator
 from itertools import zip_longest #, takewhile
 from bisect import bisect
-from typing import Any, TYPE_CHECKING
+from typing import Any, TypedDict, NotRequired, TYPE_CHECKING
 
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from pymongo.cursor import Cursor
 
 
-# Type aliases
+# Types
 
 Item = dict[str, Any]
 Items = list[Item]
@@ -45,6 +45,13 @@ NodeLabels = dict[str, str] # associating node IDs to labels
 LabelRelations = dict[str, Relations] # associates labels to relations
 SubLabel = tuple[str,str]
 SubLabels = list[SubLabel]
+
+class SubSpec(TypedDict):
+    'A subtype specification.'
+    discriminator: str
+    value_type: type # one of {str, list, bool}
+    distinct_values: NotRequired[set[str]] # if value_type is bool, distinct_values is not available
+
 
 # Globals
 
@@ -69,7 +76,7 @@ def chunker(n, iterable):
             # avoid the takewhile import and simplify to:
             # yield tuple(v for v in x if v is not fillvalue)
 #            yield tuple(takewhile(lambda v: v is not fillvalue, x))
-            yield x[:bisect(x, False, key=lambda v: v is fillvalue)]  # 3.10+ only!
+            yield x[:bisect(x, False, key=lambda v: v is fillvalue)]  # Python 3.10+ only!
         else:
             yield x
 
@@ -150,7 +157,7 @@ def flatten_and_cleanse(
         if key not in suppress and value is not None and value != '' and value != []:
             new_key = parent_key + separator + key if parent_key else key
             if isinstance(value, MutableMapping):
-                rec_res, rec_relations, rec_array_fields = flatten_and_cleanse(value, new_key, node_id, separator=separator)
+                rec_res, rec_relations, rec_array_fields = flatten_and_cleanse(value, new_key, node_id, separator, suppress)
                 res.update(rec_res)
                 update_relations(relations, rec_relations)
                 array_fields.update(rec_array_fields)
@@ -173,8 +180,7 @@ def flatten_and_cleanse(
                     # homogeneous list of ObjectIds
                     # we discard the field, but establish the relations
                     add_relations(relations, new_key, [[node_id, str(v)] for v in value])
-            elif not isinstance(value, MutableSequence):
-                # we ignore lists for now
+            else:
                 res[new_key] = value
     return res, relations, array_fields
 
@@ -186,8 +192,7 @@ def split_attributes(dictionary: Item) -> tuple[Item, Item]:
     non_primitive: Item = {}
     for key, value in dictionary.items():
         if isinstance(value, list) and not all(
-                isinstance(e, (str | bool | int | float)) for e in value
-        ):
+                isinstance(e, (str | bool | int | float)) for e in value):
             non_primitive[key] = value
         else:
             primitive[key] = value
@@ -262,27 +267,29 @@ def neo4j_add_sublabel(
         label: str,
         field: str,
         value: str,
-        sublabel: str,
+        sublabels: list[str],
         isarray: bool = False) -> None:
     """Adds <sublabel> to nodes in <label> where <value> is in list of <field> field values if isarray is True,
        or if isarray is False and <field> value equals <value>."""
-    if isarray:
-        match_clause = f'MATCH (n:`{label}`) WHERE {value} IN n.`{field}`'
-    else:
-        match_clause = f'MATCH (n:`{label}` {{`{field}`: {value}}})'
-    set_clause = f'SET n:`{sublabel}`'
-    if apoc_installed:
-        neo4j_run_write_query(
-            session,
-            verbose,
-            (f'CALL apoc.periodic.iterate("{match_clause} RETURN n",'
-             f'"{set_clause}",'
-             f'{{batchSize:{chunk_size}, parallel:true}})'))
-    else:
-        neo4j_run_write_query(
-            session,
-            verbose,
-            f'{match_clause} {set_clause}')
+    if len(sublabels) > 0:
+        if isarray:
+            match_clause = f'MATCH (n:`{label}`) WHERE {value} IN n.`{field}`'
+        else:
+            match_clause = f'MATCH (n:`{label}` {{`{field}`: {value}}})'
+        quoted_sublabels = [f'`{s}`' for s in sublabels]
+        set_clause = f'SET n:{":".join(quoted_sublabels)}'
+        if apoc_installed:
+            neo4j_run_write_query(
+                session,
+                verbose,
+                (f'CALL apoc.periodic.iterate("{match_clause} RETURN n",'
+                 f'"{set_clause}",'
+                 f'{{batchSize:{chunk_size}, parallel:true}})'))
+        else:
+            neo4j_run_write_query(
+                session,
+                verbose,
+                f'{match_clause} {set_clause}')
 
 
 # pylint: disable=too-many-arguments
@@ -380,46 +387,78 @@ def process_data(
         print('*** processing sublabels')
         established_sublabels: set[str] = set()
         apoc_installed:bool = False
-        try:
-            neo4j_run_read_query(
-                session,
-                verbose,
-                'RETURN apoc.version() AS output')
-            apoc_installed = True
-        except Exception:
-            # apoc plugin not installed
-            pass
+        if session is not None:
+            try:
+                neo4j_run_read_query(
+                    session,
+                    verbose,
+                    'RETURN apoc.version() AS output')
+                apoc_installed = True
+                print('APOC installed')
+            except Exception:
+                # apoc plugin not installed
+                pass
+        sub_label_specs:dict[str, list[SubSpec]] = {}
+#        => value as sublabel if type bool or if the spec is the only non-bool spec of the label
+#        => otherwise the discriminator and value are used as sublabels
+#        => string values are split at # and yield potentially further sublabels
+        # extract distinct values and type per sublabel item and associate it with label in sub_label_spec
         for (label, discriminator) in sublabels:
             # distinct values, without None and the empty string
             distinct_values:set[Any] = set(database[label].distinct(discriminator)).difference({None, ''})
+            sub_label_spec_item: None|SubSpec = None
             if (all(isinstance(item, bool) for item in distinct_values) and
                     True in distinct_values and
                     discriminator not in active_collections and
                     discriminator not in established_sublabels):
-                # support for boolean typed discrimination
-                neo4j_create_index(session, verbose, label, discriminator)
-                neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, 'true', discriminator)
+                # we use only the discriminator as sublabel for boolean typed discriminators
+                sub_label_spec_item = SubSpec(
+                    discriminator = discriminator,
+                    value_type = bool)
                 # remember newly created (sub-)label
                 established_sublabels.add(discriminator)
-                print(':')
             elif (1 < len(distinct_values) < 50 and
                     all(isinstance(item, str) for item in distinct_values) and
                     not active_collections.intersection(distinct_values) and
                     not established_sublabels.intersection(distinct_values)):
-                isarray = discriminator in array_fields
-                print(discriminator, len(distinct_values), isarray)
-                # first establish index on the discriminator
-                if not isarray:
-                    # for fields of type list the index is not effective
+                sub_label_spec_item = SubSpec(
+                    discriminator = discriminator,
+                    value_type = (list if (discriminator in array_fields) else str),
+                    distinct_values = distinct_values)
+                # remember newly created (sub-)label
+                new_sublabels:list[str] = [item for sublist in [sl.split('#') for sl in distinct_values] for item in sublist]
+                new_sublabels.append(discriminator)
+                established_sublabels.update(new_sublabels)
+            if sub_label_spec_item is not None:
+                if label in sub_label_specs:
+                    sub_label_specs[label].append(sub_label_spec_item)
+                else:
+                    sub_label_specs[label] = [sub_label_spec_item]
+
+        for label, sub_specs in sub_label_specs.items():
+            multiple_sublabels:bool = len([ss for ss in sub_specs if ss['value_type'] != bool])>1
+            for sub_spec in sub_specs:
+                if sub_spec['value_type'] is bool:
+                    discriminator = sub_spec['discriminator']
                     neo4j_create_index(session, verbose, label, discriminator)
-                for sl in distinct_values:
-                    # add sublabels
-                    neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", sl, isarray)
-                    # remember newly created (sub-)label
-                    established_sublabels.add(sl)
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-                print('') # add a newline
+                    neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, 'true', [discriminator])
+                    print(':')
+                elif sub_spec['value_type'] in [str, list]:
+                    # first establish index on the discriminator
+                    isarray:bool = sub_spec['value_type'] is list
+                    discriminator = sub_spec['discriminator']
+                    if not isarray:
+                        # for fields of type list the index is not effective
+                        neo4j_create_index(session, verbose, label, discriminator)
+                    for sl in sub_spec['distinct_values']:
+                        # add sublabels
+                        labels: list[str] = sl.split('#')
+                        if multiple_sublabels:
+                            labels.append(discriminator)
+                        neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", labels, isarray)
+                        sys.stdout.write('.')
+                        sys.stdout.flush()
+                    print('') # add a newline
 
 
 # pylint: disable=too-many-locals
@@ -439,8 +478,7 @@ def main(
         sublabels: SubLabels,
         create: bool = False,
         verbose: bool = False,
-        simulate: bool = False,
-) -> None:
+        simulate: bool = False) -> None:
     """The main mongo2neo4j function that takes MongoDB credential and DB name, Neo4j credentials \
         and DB name and a specification which MongoDB collections and attributes should be \
         transferred to Neo4j, if the Cypher queries should be printed to stdout (verbose=True) \
