@@ -55,7 +55,7 @@ class SubSpec(TypedDict):
 
 # Globals
 
-attr_to_remove: Fields = {
+default_fields_to_remove: Fields = {
     '__v'  # the document version will always be ignored and never transferred
 }
 
@@ -339,7 +339,7 @@ def process_data(
                 cleansed_data:Items = []
                 # first we convert all objects in per chunk and extract its relations
                 for obj in chunk:
-                    obj_data, obj_relations, obj_array_fields = flatten_and_cleanse(obj, suppress=attr_to_remove.union(excluded_fields))
+                    obj_data, obj_relations, obj_array_fields = flatten_and_cleanse(obj, suppress=excluded_fields)
                     node_id: str = obj_data['_id']
                     if node_id in node_label:
                         print(f"ignoring object with duplicate ObjectId '{node_id}':{collection} (already registered as with label '{node_label[node_id]}').")
@@ -651,7 +651,7 @@ if __name__ == '__main__':
     for c in args.excluded_collections:
         for s in c.split(','):
             args_excluded_collections.add(s)
-    args_excluded_fields: Fields = set()
+    args_excluded_fields: Fields = default_fields_to_remove
     if args.excluded_fields is not None:
         for fields in args.excluded_fields:
             for f in fields.split(','):
