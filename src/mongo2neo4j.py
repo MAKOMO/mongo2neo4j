@@ -293,8 +293,8 @@ def neo4j_add_sublabel(
 
 # see https://stackoverflow.com/a/34325723
 # Progress Bar Printing Function
-def printProgressBar(iteration, total = 100, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+def printProgressBar(iteration, total = 100, prefix = '', suffix = '', decimals = 1, length = 70, fill = '█', printEnd = "\r"):
+    percent = f'{100 * (iteration / float(total)):.{decimals}f}'
     filledLength = int(length * iteration // total)
     progbar = fill * filledLength + '-' * (length - filledLength)
     print(f'\r{prefix} |{progbar}| {percent}% {suffix}', end = printEnd)
@@ -344,12 +344,13 @@ def process_data(
                  'REQUIRE l._id IS UNIQUE'))
 
             # Initial Call
-            printProgressBar(0, item_count, length = 70)
+            printProgressBar(0, item_count)
             cnt:int = 0
             for chunk in yield_rows(cursor, chunk_size):
                 cleansed_data:Items = []
                 # first we convert all objects in per chunk and extract its relations
                 for obj in chunk:
+                    cnt += 1
                     obj_data, obj_relations, obj_array_fields = flatten_and_cleanse(obj, suppress=attr_to_remove.union(excluded_fields))
                     node_id: str = obj_data['_id']
                     if node_id in node_label:
@@ -366,7 +367,7 @@ def process_data(
                 # sys.stdout.write('.')
                 # sys.stdout.flush()
                 # Update Progress Bar
-                printProgressBar(cnt, item_count, length = 70)
+                printProgressBar(cnt, item_count)
             # Print New Line on Complete
             print()
             all_relations[collection] = relations
