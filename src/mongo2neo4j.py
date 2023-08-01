@@ -55,10 +55,13 @@ class SubSpec(TypedDict):
 
 # Globals
 
-attr_to_remove: Fields = {
+default_fields_to_remove: Fields = {
     '__v'  # the document version will always be ignored and never transferred
 }
 
+default_exclude_collections:Collections = {
+    "system.profile"
+}
 
 
 # Utility functions
@@ -462,14 +465,15 @@ def process_data(
                     if not isarray:
                         # for fields of type list the index is not effective
                         neo4j_create_index(session, verbose, label, discriminator)
-                    for sl in sub_spec['distinct_values']:
-                        # add sublabels
-                        labels: list[str] = sl.split('#')
-                        if multiple_sublabels:
-                            labels.append(discriminator)
-                        neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", labels, isarray)
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
+                    if 'distinct_values' in sub_spec:
+                        for sl in sub_spec['distinct_values']:
+                            # add sublabels
+                            labels: list[str] = sl.split('#')
+                            if multiple_sublabels:
+                                labels.append(discriminator)
+                            neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", labels, isarray)
+                            sys.stdout.write('.')
+                            sys.stdout.flush()
                     print('') # add a newline
 
 
@@ -662,11 +666,11 @@ if __name__ == '__main__':
         for c in args.included_collections:
             for s in c.split(','):
                 requested_collections.add(s)
-    args_excluded_collections: Collections = set()
+    args_excluded_collections: Collections = default_exclude_collections
     for c in args.excluded_collections:
         for s in c.split(','):
             args_excluded_collections.add(s)
-    args_excluded_fields: Fields = set()
+    args_excluded_fields: Fields = default_fields_to_remove
     if args.excluded_fields is not None:
         for fields in args.excluded_fields:
             for f in fields.split(','):
