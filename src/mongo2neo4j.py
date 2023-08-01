@@ -351,7 +351,7 @@ def process_data(
                 # first we convert all objects in per chunk and extract its relations
                 for obj in chunk:
                     cnt += 1
-                    obj_data, obj_relations, obj_array_fields = flatten_and_cleanse(obj, suppress=attr_to_remove.union(excluded_fields))
+                    obj_data, obj_relations, obj_array_fields = flatten_and_cleanse(obj, suppress=excluded_fields)
                     node_id: str = obj_data['_id']
                     if node_id in node_label:
                         print(f"ignoring object with duplicate ObjectId '{node_id}':{collection} (already registered as with label '{node_label[node_id]}').")
