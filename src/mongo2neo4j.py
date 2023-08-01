@@ -447,14 +447,15 @@ def process_data(
                     if not isarray:
                         # for fields of type list the index is not effective
                         neo4j_create_index(session, verbose, label, discriminator)
-                    for sl in sub_spec['distinct_values']:
-                        # add sublabels
-                        labels: list[str] = sl.split('#')
-                        if multiple_sublabels:
-                            labels.append(discriminator)
-                        neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", labels, isarray)
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
+                    if 'distinct_values' in sub_spec:
+                        for sl in sub_spec['distinct_values']:
+                            # add sublabels
+                            labels: list[str] = sl.split('#')
+                            if multiple_sublabels:
+                                labels.append(discriminator)
+                            neo4j_add_sublabel(session, verbose, chunk_size, apoc_installed, label, discriminator, f"'{sl}'", labels, isarray)
+                            sys.stdout.write('.')
+                            sys.stdout.flush()
                     print('') # add a newline
 
 
