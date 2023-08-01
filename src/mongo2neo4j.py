@@ -59,6 +59,9 @@ attr_to_remove: Fields = {
     '__v'  # the document version will always be ignored and never transferred
 }
 
+default_exclude_collections:Collections = {
+    "system.profile"
+}
 
 
 # Utility functions
@@ -648,7 +651,7 @@ if __name__ == '__main__':
         for c in args.included_collections:
             for s in c.split(','):
                 requested_collections.add(s)
-    args_excluded_collections: Collections = set()
+    args_excluded_collections: Collections = default_exclude_collections
     for c in args.excluded_collections:
         for s in c.split(','):
             args_excluded_collections.add(s)
