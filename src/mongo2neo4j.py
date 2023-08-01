@@ -291,6 +291,14 @@ def neo4j_add_sublabel(
                 verbose,
                 f'{match_clause} {set_clause}')
 
+# see https://stackoverflow.com/a/34325723
+# Progress Bar Printing Function
+def printProgressBar(iteration, total = 100, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    progbar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{progbar}| {percent}% {suffix}', end = printEnd)
+
 
 # pylint: disable=too-many-arguments
 def process_data(
@@ -321,7 +329,7 @@ def process_data(
     for collection in active_collections:
         item_count:int = database[collection].count_documents({})
         if item_count > 0:
-            print(f"*** processing nodes of collection '{collection}'")
+            print(f"*** processing {item_count} nodes of collection '{collection}'")
             relations = {}
             cursor: Cursor[Any] = database[collection].find({}, batch_size=chunk_size)
             chunk: Items
@@ -335,6 +343,9 @@ def process_data(
                 (f'CREATE CONSTRAINT `{collection}_cstr` IF NOT EXISTS FOR (l:`{collection}`) '
                  'REQUIRE l._id IS UNIQUE'))
 
+            # Initial Call
+            printProgressBar(0, item_count, length = 70)
+            cnt:int = 0
             for chunk in yield_rows(cursor, chunk_size):
                 cleansed_data:Items = []
                 # first we convert all objects in per chunk and extract its relations
@@ -352,13 +363,16 @@ def process_data(
                 data: dict[str, Items] = { 'batch': cleansed_data }
                 query = f"UNWIND $batch as row {('CREATE' if create else 'MERGE')} (n:`{collection}` {{_id: row._id}}) SET n += row"
                 neo4j_run_write_query(session, verbose, query, **data)
-                sys.stdout.write('.')
-                sys.stdout.flush()
-            print('') # add a newline
+                # sys.stdout.write('.')
+                # sys.stdout.flush()
+                # Update Progress Bar
+                printProgressBar(cnt, item_count, length = 70)
+            # Print New Line on Complete
+            print()
             all_relations[collection] = relations
 
-
     # add relations
+
     for collection, relations in all_relations.items():
         print(f"*** processing relations of collection '{collection}'")
 
