@@ -1,4 +1,5 @@
 # mongo2neo4j
+
 MongoDB Mongoose to Neo4j Importer
 
 ## Installation
@@ -17,22 +18,29 @@ see [Python](https://python.org/)
 
 ### Install Python libs
 
-```
-# pip install -r requirements.txt
+```sh
+% pip install -r requirements.txt
 ```
 
 ### Run the importer
 
-You can run the `mongo2neo4j`importer from the shell by providing at least the password of the Neo4j DB to be exported to (if not specified the default `neo4j` DB is addressed) and the name of the MongoDB the data should be imported from.
+You can run the `mongo2neo4j`importer from the shell by providing at least the name of the MongoDB the data should be imported from. If not specified the default `neo4j` DB is targeted with the default `neo4j` user. It is likely that you will have to add passwords.
 
+```sh
+% ./src/mongo2neo4j.py \  
+  [--mongo_host mongodb://<mongo_user>:<mongo_password>@<mongo_host] \
+  [--neo4j_user=<neo4j_user>] [--neo4j_password=<neo4j_password>] \  
+  <mongo_db>
 ```
-# ./mongo2neo4j.py -neo4j_password=**** MyMongoDB
+
+```sh
+  
 ```
 
 Further configuration options are listed on calling
 
-```
-# ./mongo2neo4j.py -h
+```sh
+% ./src/mongo2neo4j.py -h
 ```
 
 NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Neo4j DB, the `apoc.periodic.iterate` method is used to add sublabels.*

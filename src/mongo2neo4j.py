@@ -550,7 +550,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--conf',
         action='append',
-        default=['mongo2neo4j.conf'],
         help='Read config file')
     parser.add_argument('-v', '--verbose', action='store_true', help='Output Cypher')
     parser.add_argument(
@@ -600,12 +599,12 @@ if __name__ == '__main__':
         '--neo4j_password',
         dest='neo4j_password',
         type=str,
-        required=True,
         help='Neo4j password')
     parser.add_argument(
         '-nd', '--neo4j_db',
         dest='neo4j_db',
         type=str,
+        default='neo4j', # only database in community edition
         help='Neo4j DB to import into')
     parser.add_argument(
         '-k',
