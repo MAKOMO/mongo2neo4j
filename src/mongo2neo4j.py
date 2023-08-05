@@ -604,7 +604,6 @@ if __name__ == '__main__':
         '-nd', '--neo4j_db',
         dest='neo4j_db',
         type=str,
-        default='neo4j', # only database in community edition
         help='Neo4j DB to import into')
     parser.add_argument(
         '-k',
