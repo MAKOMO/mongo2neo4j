@@ -34,7 +34,7 @@ You can run the `mongo2neo4j`importer from the shell by providing at least the n
 
 ```sh
 % ./src/mongo2neo4j.py \
-  [--mongo_host mongodb://<mongo_user>:<mongo_password>@<mongo_host] \
+  [--mongo_host mongodb://<mongo_user>:<mongo_password>@<mongo_host>] \
   [--neo4j_user=<neo4j_user>] [--neo4j_password=<neo4j_password>] \
   <mongo_db>
 ```
@@ -68,8 +68,8 @@ MongoDB connection
 
 Neo4j connection
 <dl>
-  <dt><pre>-nh NEO4J_HOST, --neo4j_host NEO4J_HOST</pre></dt>
-  <dd>Neo4j hostname. Default: <pre>localhost</pre></dd>
+  <dt><tt>-nh NEO4J_HOST, --neo4j_host NEO4J_HOST</tt></dt>
+  <dd>Neo4j hostname. Default: <tt>localhost</tt></dd>
   <dt><pre>-np NEO4J_PORT, --neo4j_port NEO4J_PORT</pre></dt>
   <dd>Neo4j port. Default: <tt>7687</tt></dd>
   <dt><pre>-nu NEO4J_USER, --neo4j_user NEO4J_USER</pre></dt>
@@ -118,7 +118,7 @@ Options
 </dl>
 <dl>
   <dt><pre>--conf CONF</pre></dt>
-  <dd>Read JSON config file. Default: <tt>mongo2neo4j.conf</t></dd>
+  <dd>Read JSON config file. Default: <tt>mongo2neo4j.conf</tt></dd>
 </dl>
 <dl>
   <dt><pre>-v, --verbose</pre></dt>
