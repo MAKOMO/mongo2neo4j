@@ -919,21 +919,21 @@ if __name__ == '__main__':
         dest='excluded_collections',
         action='append',
         default=[],
-        help='Collection to be excluded')
+        help='Collection to be excluded. Collection names can have a * at the begin or end to match multiple collections.')
     mapping_group.add_argument(
         '-f',
         '--exclude_fields',
         dest='excluded_fields',
         action='append',
         default=[],
-        help='MongoDB document fields to be ignored')
+        help='MongoDB document fields to be ignored. Field names can have a * at the begin or end to match multiple fields.')
     mapping_group.add_argument(
         '-sl',
         '--sublabels',
         dest='sublabels',
         action='append',
         default=[],
-        help='List of <Collection>.<attrib> of type string or list of strs to create sublabels')
+        help='List of <Collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strs to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.')
     mapping_group.add_argument(
         '-r',
         '--relations',

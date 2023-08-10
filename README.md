@@ -2,6 +2,12 @@
 
 MongoDB Mongoose to Neo4j Importer
 
+![License](https://img.shields.io/github/license/artisan-roaster-scope/artisan.svg)
+[![pylint](https://github.com/artisan-roaster-scope/artisan/actions/workflows/pylint.yaml/badge.svg?branch=master&event=push)](https://github.com/artisan-roaster-scope/artisan/actions?query=workflow:pylint+event:push+branch:master)
+[![Mypy](https://github.com/artisan-roaster-scope/artisan/actions/workflows/mypy.yml/badge.svg?branch=master)](https://github.com/artisan-roaster-scope/artisan/actions/workflows/mypy.yml)
+[![Ruff](https://github.com/artisan-roaster-scope/artisan/actions/workflows/ruff.yaml/badge.svg?branch=master)](https://github.com/artisan-roaster-scope/artisan/actions/workflows/ruff.yaml)
+[![pytest](https://github.com/artisan-roaster-scope/artisan/actions/workflows/pytest.yaml/badge.svg?branch=master)](https://github.com/artisan-roaster-scope/artisan/actions/workflows/pytest.yaml)
+
 ## Installation
 
 ### Install Neo4j
@@ -45,7 +51,7 @@ NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Ne
 ### Required Argument
 
 <dl>
-  <dt>`mongo_db`</dt>
+  <dt><pre>mongo_db</pre></dt>
   <dd>MongoDB DB to be imported</dd>
 </dl>
 
@@ -54,79 +60,79 @@ NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Ne
 
 MongoDB connection
 <dl>
-  <dt>`-mh MONGO_HOST, --mongo_host MONGO_HOST`</dt>
-  <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: `localhost`</dd>
-  <dt>`-mp MONGO_PORT, --mongo_port MONGO_PORT`. Default: `27017`</dt>
+  <dt><pre>-mh MONGO_HOST, --mongo_host MONGO_HOST</pre></dt>
+  <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: <pre>localhost</pre></dd>
+  <dt><pre>-mp MONGO_PORT, --mongo_port MONGO_PORT</pre>. Default: <pre>27017</pre></dt>
   <dd>MongoDB port</dd>
 </dl>
 
 Neo4j connection
 <dl>
-  <dt>`-nh NEO4J_HOST, --neo4j_host NEO4J_HOST`</dt>
-  <dd>Neo4j hostname. Default: `localhost`</dd>
-  <dt>`-np NEO4J_PORT, --neo4j_port NEO4J_PORT`</dt>
-  <dd>Neo4j port. Default: `7687`</dd>
-  <dt>`-nu NEO4J_USER, --neo4j_user NEO4J_USER`</dt>
+  <dt><pre>-nh NEO4J_HOST, --neo4j_host NEO4J_HOST</pre></dt>
+  <dd>Neo4j hostname. Default: <pre>localhost</pre></dd>
+  <dt><pre>-np NEO4J_PORT, --neo4j_port NEO4J_PORT</pre></dt>
+  <dd>Neo4j port. Default: <pre>7687</pre></dd>
+  <dt><pre>-nu NEO4J_USER, --neo4j_user NEO4J_USER</pre></dt>
   <dd>Neo4j user. Default: `neo4j`</dd>
-  <dt>`-npw NEO4J_PASSWORD, --neo4j_password NEO4J_PASSWORD`</dt>
+  <dt><pre>-npw NEO4J_PASSWORD, --neo4j_password NEO4J_PASSWORD</pre></dt>
   <dd>Neo4j password</dd>
-  <dt>`-nd NEO4J_DB, --neo4j_db NEO4J_DB`</dt>
+  <dt><pre>-nd NEO4J_DB, --neo4j_db NEO4J_DB</pre></dt>
   <dd>Neo4j DB to import into. Default: <default Neo4j DB></dd>
 </dl>
 
 Mapping
 <dl>
-  <dt>`-i INCLUDED_COLLECTIONS, --include INCLUDED_COLLECTIONS`</dt>
+  <dt><pre>-i INCLUDED_COLLECTIONS, --include INCLUDED_COLLECTIONS</pre></dt>
   <dd>Collection to be transferred. If not specified, transfer all not excluded ones</dd>
 </dl>
 <dl>
-  <dt>`-x EXCLUDED_COLLECTIONS, --exclude EXCLUDED_COLLECTIONS`</dt>
-  <dd>Collection to be excluded</dd>
+  <dt><pre>-x EXCLUDED_COLLECTIONS, --exclude EXCLUDED_COLLECTIONS</pre></dt>
+  <dd>Collection to be excluded. Collection names can have a * at the begin or end to match multiple collections.</dd>
 </dl>
 <dl>
-  <dt>`-f EXCLUDED_FIELDS, --exclude_fields EXCLUDED_FIELDS`</dt>
-  <dd>MongoDB document fields to be ignored</dd>
+  <dt><pre>-f EXCLUDED_FIELDS, --exclude_fields EXCLUDED_FIELDS</pre></dt>
+  <dd>MongoDB document fields to be ignored. Field names can have a * at the begin or end to match multiple fields.</dd>
 </dl>
 <dl>
-  <dt>`-sl SUBLABELS, --sublabels SUBLABELS`</dt>
+  <dt><pre>-sl SUBLABELS, --sublabels SUBLABELS</pre></dt>
   <dd>List of <Collection>.<attrib> of type string or list of strs to create sublabels</dd>
 </dl>
 <dl>
-  <dt>`-r RELATIONS, --relations RELATIONS`</dt>
-  <dd>List of <Collection>.<attrib>,<Collection>.<attrib> tuples to relations between nodes of equal str/number values</dd>
+  <dt><pre>-r RELATIONS, --relations RELATIONS</pre></dt>
+  <dd>List of <Collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strs to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.</dd>
 </dl>
 <dl>
-  <dt>`-lr LIST_RELATIONS, --list_relations LIST_RELATIONS`</dt>
+  <dt><pre>-lr LIST_RELATIONS, --list_relations LIST_RELATIONS</pre></dt>
   <dd>List of <Collection>.<attrib>,<Collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values</dd>
 </dl>
 
 
 Options
 <dl>
-  <dt>`-h, --help`</dt>
+  <dt><pre>-h, --help</pre></dt>
   <dd>show a help message and exit</dd>
 </dl>
 <dl>
-  <dt>`--conf_export`</dt>
+  <dt><pre>--conf_export</pre></dt>
   <dd>Dump config and exit</dd>
 </dl>
 <dl>
-  <dt>`--conf CONF`</dt>
-  <dd>Read JSON config file. Default: `mongo2neo4j.conf`</dd>
+  <dt><pre>--conf CONF</pre></dt>
+  <dd>Read JSON config file. Default: <pre>mongo2neo4j.conf</pre></dd>
 </dl>
 <dl>
-  <dt>`-v, --verbose`</dt>
+  <dt><pre>-v, --verbose</pre></dt>
   <dd>Output Cypher</dd>
 </dl>
 <dl>
-  <dt>`-s, --simulate`</dt>
+  <dt><pre>-s, --simulate</pre></dt>
   <dd>Don't connect to Neo4j</dd>
 </dl>
 <dl>
-  <dt>`-c, --create`</dt>
+  <dt><pre>-c, --create</pre></dt>
   <dd>Use CREATE instead of MERGE to create objects in Neo4j</dd>
 </dl>
 <dl>
-  <dt>`-k CHUNK_SIZE, --chunk_size CHUNK_SIZE`</dt>
-  <dd>Processing objects chunk size. Default: `500`</dd>
+  <dt><pre>-k CHUNK_SIZE, --chunk_size CHUNK_SIZE</pre></dt>
+  <dd>Processing objects chunk size. Default: <pre>500</pre></dd>
 </dl>
