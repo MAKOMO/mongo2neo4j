@@ -49,7 +49,7 @@ Further configuration options are listed on calling
 % ./src/mongo2neo4j.py -h
 ```
 
-NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Neo4j DB, the faster and memory-effective `apoc.periodic.iterate` method is used to generate nodes and sublabels.
+NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Neo4j DB, the faster and memory-effective `apoc.periodic.iterate` method is used to generate nodes and sublabels.*
 
 
 ### Required Argument
@@ -67,8 +67,8 @@ __MongoDB connection__
 <dl>
   <dt><tt>-mh MONGO_HOST, --mongo_host MONGO_HOST</tt></dt>
   <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: <tt>localhost</tt></dd>
-  <dt><tt>-mp MONGO_PORT, --mongo_port MONGO_PORT</tt>. Default: <tt>27017</tt></dt>
-  <dd>MongoDB port</dd>
+  <dt><tt>-mp MONGO_PORT, --mongo_port MONGO_PORT</tt></dt>
+  <dd>MongoDB port. Default: <tt>27017</tt></dd>
 </dl>
 
 
@@ -87,7 +87,8 @@ __Neo4j connection__
   <dd>Neo4j DB to import into. Default: <tt>default Neo4j DB</tt></dd>
 </dl>
 
-Mapping
+__Mapping__
+
 <dl>
   <dt><tt>-i INCLUDED_COLLECTIONS, --include INCLUDED_COLLECTIONS</tt></dt>
   <dd>Collection to be transferred. If not specified, transfer all not excluded ones</dd>
@@ -114,7 +115,8 @@ Mapping
 </dl>
 
 
-Options
+__Options__
+
 <dl>
   <dt><tt>-h, --help</tt></dt>
   <dd>show a help message and exit</dd>
