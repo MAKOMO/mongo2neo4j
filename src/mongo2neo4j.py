@@ -933,21 +933,21 @@ if __name__ == '__main__':
         dest='sublabels',
         action='append',
         default=[],
-        help='List of <Collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strs to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.')
+        help='List of <collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strings to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.')
     mapping_group.add_argument(
         '-r',
         '--relations',
         dest='relations',
         action='append',
         default=[],
-        help='List of <Collection>.<attrib>,<Collection>.<attrib> tuples to relations between nodes of equal str/number values')
+        help='List of <Collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of equal str/number values')
     mapping_group.add_argument(
         '-lr',
         '--list_relations',
         dest='list_relations',
         action='append',
         default=[],
-        help='List of <Collection>.<attrib>,<Collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values')
+        help='List of <collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values')
 
     parser.add_argument(
         '--conf_export',

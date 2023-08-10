@@ -28,7 +28,7 @@ see [Python](https://python.org/)
 % pip install -r requirements.txt
 ```
 
-### Run the importer
+## Run the importer
 
 You can run the `mongo2neo4j`importer from the shell by providing at least the name of the MongoDB the data should be imported from. If not specified the default `neo4j` DB is targeted with the default `neo4j` user. It is likely that you will have to add passwords.
 
@@ -61,8 +61,8 @@ NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Ne
 MongoDB connection
 <dl>
   <dt><pre>-mh MONGO_HOST, --mongo_host MONGO_HOST</pre></dt>
-  <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: <pre>localhost</pre></dd>
-  <dt><pre>-mp MONGO_PORT, --mongo_port MONGO_PORT</pre>. Default: <pre>27017</pre></dt>
+  <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: <tt>localhost</tt></dd>
+  <dt><pre>-mp MONGO_PORT, --mongo_port MONGO_PORT</pre>. Default: <tt>27017</tt></dt>
   <dd>MongoDB port</dd>
 </dl>
 
@@ -71,13 +71,13 @@ Neo4j connection
   <dt><pre>-nh NEO4J_HOST, --neo4j_host NEO4J_HOST</pre></dt>
   <dd>Neo4j hostname. Default: <pre>localhost</pre></dd>
   <dt><pre>-np NEO4J_PORT, --neo4j_port NEO4J_PORT</pre></dt>
-  <dd>Neo4j port. Default: <pre>7687</pre></dd>
+  <dd>Neo4j port. Default: <tt>7687</tt></dd>
   <dt><pre>-nu NEO4J_USER, --neo4j_user NEO4J_USER</pre></dt>
-  <dd>Neo4j user. Default: `neo4j`</dd>
+  <dd>Neo4j user. Default: <tt>neo4j</tt></dd>
   <dt><pre>-npw NEO4J_PASSWORD, --neo4j_password NEO4J_PASSWORD</pre></dt>
   <dd>Neo4j password</dd>
   <dt><pre>-nd NEO4J_DB, --neo4j_db NEO4J_DB</pre></dt>
-  <dd>Neo4j DB to import into. Default: <default Neo4j DB></dd>
+  <dd>Neo4j DB to import into. Default: <tt>default Neo4j DB</tt></dd>
 </dl>
 
 Mapping
@@ -95,15 +95,15 @@ Mapping
 </dl>
 <dl>
   <dt><pre>-sl SUBLABELS, --sublabels SUBLABELS</pre></dt>
-  <dd>List of <Collection>.<attrib> of type string or list of strs to create sublabels</dd>
+  <dd>List of <tt>&lt;collection&gt;.&lt;attrib&gt;</tt> of type string or list of strs to create sublabels</dd>
 </dl>
 <dl>
   <dt><pre>-r RELATIONS, --relations RELATIONS</pre></dt>
-  <dd>List of <Collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strs to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.</dd>
+  <dd>List of <tt>&lt;collection&gt;.&lt;attrib&gt;[.&lt;postfix&gt;][,&lt;others&gt;]</tt> fields of type string or list of strings to create sublabels. The optional <tt>&lt;postfix&gt;</tt> is added to the generated sublabel and if <tt>&lt;others&gt;</tt> is given it is used to collect nodes without proper value.</dd>
 </dl>
 <dl>
   <dt><pre>-lr LIST_RELATIONS, --list_relations LIST_RELATIONS</pre></dt>
-  <dd>List of <Collection>.<attrib>,<Collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values</dd>
+  <dd>List of <tt>&lt;collection&gt;.&lt;attrib&gt;,&lt;collection&gt;.&lt;attrib&gt;</tt> tuples to relations between nodes of list of str/number values and str/number values</dd>
 </dl>
 
 
@@ -118,7 +118,7 @@ Options
 </dl>
 <dl>
   <dt><pre>--conf CONF</pre></dt>
-  <dd>Read JSON config file. Default: <pre>mongo2neo4j.conf</pre></dd>
+  <dd>Read JSON config file. Default: <tt>mongo2neo4j.conf</t></dd>
 </dl>
 <dl>
   <dt><pre>-v, --verbose</pre></dt>
@@ -134,5 +134,5 @@ Options
 </dl>
 <dl>
   <dt><pre>-k CHUNK_SIZE, --chunk_size CHUNK_SIZE</pre></dt>
-  <dd>Processing objects chunk size. Default: <pre>500</pre></dd>
+  <dd>Processing objects chunk size. Default: <tt>500</tt></dd>
 </dl>
