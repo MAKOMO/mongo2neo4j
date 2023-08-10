@@ -55,7 +55,7 @@ NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Ne
 ### Required Argument
 
 <dl>
-  <dt><pre>mongo_db</pre></dt>
+  <dt><tt>mongo_db</tt></dt>
   <dd>MongoDB DB to be imported</dd>
 </dl>
 
@@ -91,11 +91,11 @@ __Mapping__
 
 <dl>
   <dt><tt>-i INCLUDED_COLLECTIONS, --include INCLUDED_COLLECTIONS</tt></dt>
-  <dd>Collection to be transferred. If not specified, transfer all not excluded ones</dd>
+  <dd>Collections to be transferred. If not specified, transfer all not excluded ones</dd>
 </dl>
 <dl>
   <dt><tt>-x EXCLUDED_COLLECTIONS, --exclude EXCLUDED_COLLECTIONS</tt></dt>
-  <dd>Collection to be excluded. Collection names can have a * at the begin or end to match multiple collections.</dd>
+  <dd>Collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.</dd>
 </dl>
 <dl>
   <dt><tt>-f EXCLUDED_FIELDS, --exclude_fields EXCLUDED_FIELDS</tt></dt>

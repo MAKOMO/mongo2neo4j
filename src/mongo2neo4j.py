@@ -912,14 +912,14 @@ if __name__ == '__main__':
         '--include',
         dest='included_collections',
         action='append',
-        help='Collection to be transferred. If not specified, transfer all not excluded ones')
+        help='Collections to be transferred. If not specified, transfer all not excluded ones')
     mapping_group.add_argument(
         '-x',
         '--exclude',
         dest='excluded_collections',
         action='append',
         default=[],
-        help='Collection to be excluded. Collection names can have a * at the begin or end to match multiple collections.')
+        help='Collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.')
     mapping_group.add_argument(
         '-f',
         '--exclude_fields',
