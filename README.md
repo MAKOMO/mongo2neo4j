@@ -66,7 +66,7 @@ __MongoDB connection__
 
 <dl>
   <dt><tt>-mh MONGO_HOST, --mongo_host MONGO_HOST</tt></dt>
-  <dd>MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI. Default: <tt>localhost</tt></dd>
+  <dd>MongoDB simple hostname or a full MongoDB URI of the form <tt>mongodb://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;</tt>. Unix domain sockets with percent encoded socket path in the URI. Default: <tt>localhost</tt></dd>
   <dt><tt>-mp MONGO_PORT, --mongo_port MONGO_PORT</tt></dt>
   <dd>MongoDB port. Default: <tt>27017</tt></dd>
 </dl>
