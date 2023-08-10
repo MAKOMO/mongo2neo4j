@@ -91,15 +91,15 @@ __Mapping__
 
 <dl>
   <dt><tt>-i INCLUDED_COLLECTIONS, --include INCLUDED_COLLECTIONS</tt></dt>
-  <dd>Collections to be transferred. If not specified, transfer all not excluded ones</dd>
+  <dd>Comma separated collections to be transferred. If not specified, transfer all not excluded ones</dd>
 </dl>
 <dl>
   <dt><tt>-x EXCLUDED_COLLECTIONS, --exclude EXCLUDED_COLLECTIONS</tt></dt>
-  <dd>Collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.</dd>
+  <dd>Comma separated collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.</dd>
 </dl>
 <dl>
   <dt><tt>-f EXCLUDED_FIELDS, --exclude_fields EXCLUDED_FIELDS</tt></dt>
-  <dd>MongoDB document fields to be ignored. Field names can have a * at the begin or end to match multiple fields.</dd>
+  <dd>Comma separated fields to be ignored. Field names can have a * at the begin or end to match multiple fields.</dd>
 </dl>
 <dl>
   <dt><tt>-sl SUBLABELS, --sublabels SUBLABELS</tt></dt>
