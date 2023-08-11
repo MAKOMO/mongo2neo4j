@@ -7,6 +7,19 @@ on:
   pull_request:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      ### Flags for mypy ###
+      mypy_flags:
+        description: 'pytest options (default: <none>)'
+        required: false
+        default: ''
+      ignore_note:
+        description: |
+          Ignore note entry.
+          pytest report some error with optional note entry.
+          This option is workaround.
+        default: 'false'
 
 jobs:
   pytest:
