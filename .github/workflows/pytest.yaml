@@ -9,8 +9,8 @@ on:
       - master
   workflow_dispatch:
     inputs:
-      ### Flags for mypy ###
-      mypy_flags:
+      ### Flags for pytest ###
+      pytest_flags:
         description: 'pytest options (default: <none>)'
         required: false
         default: ''
