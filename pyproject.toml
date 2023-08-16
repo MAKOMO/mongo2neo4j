@@ -1,3 +1,10 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+mongo2neo4j = "mongo2neo4j:console_main"
+
 [project]
 name = "mongo2neo4j"
 dynamic = ['version']
@@ -20,9 +27,11 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/MAKOMO/mongo2neo4j"
+"Homepage" = "https://makomo.github.io/mongo2neo4j/"
 "Issue Tracker" = "https://github.com/MAKOMO/mongo2neo4j/issues"
 
+[tool.setuptools.dynamic]
+version = {attr = "mongo2neo4j.__version__"}
 
 ## black
 
@@ -98,7 +107,7 @@ enable='''c-extension-no-member,'''
 ## mypy conf
 
 [tool.mypy]
-files = ["src/*.py"]
+files = ["src/mongo2neo4j/*.py"]
 python_version = "3.11"
 check_untyped_defs = true
 
@@ -133,7 +142,7 @@ target-version = "py311"
 ## pyright conf
 
 [tool.pyright]
-include = ["src"]
+include = ["src/mongo2neo4j"]
 
 reportMissingImports = true
 reportMissingTypeStubs = false

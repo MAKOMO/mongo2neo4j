@@ -18,7 +18,7 @@ SemSpect <https://www.semspect.de/>.
 import os
 import sys
 import json
-import timeit
+import time
 import argparse
 import datetime
 import uuid
@@ -791,7 +791,7 @@ def main(
         list_relations: RelationSpecifications,
         create: bool = False,
         verbose: bool = False,
-        simulate: bool = False) -> None:
+        simulate: bool = False) -> int:
     """The main mongo2neo4j function that takes MongoDB credential and DB name, Neo4j credentials \
         and DB name and a specification which MongoDB collections and attributes should be \
         transferred to Neo4j, if the Cypher queries should be printed to stdout (verbose=True) \
@@ -841,6 +841,7 @@ def main(
                         create,
                         verbose,
                         chunk_size)
+        return 0
     except AuthError:
         print('Neo4j authentication failed')
     except ServerSelectionTimeoutError:
@@ -849,194 +850,211 @@ def main(
         print('MongoDB error', e)
     except Neo4jError as e:
         print('Neo4j error', e)
+    return -1
 
+
+def console_main() -> int:
+    """The CLI entry point of mongo2neo4j.
+
+    This function is not meant for programmable use; use `main()` instead.
+    """
+    # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+    try:
+        parser = argparse.ArgumentParser(description=f'mongo2neo4j v{__version__}: {__doc__}')
+        mongo_group = parser.add_argument_group('MongoDB connection')
+        mongo_group.add_argument(
+            '-mh',
+            '--mongo_host',
+            dest='mongo_host',
+            type=str,
+            default='localhost',
+            help='MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI.')
+        mongo_group.add_argument(
+            '-mp',
+            '--mongo_port',
+            dest='mongo_port',
+            type=int,
+            default='27017',
+            help='MongoDB port')
+
+        neo4j_group = parser.add_argument_group('Neo4j connection')
+        neo4j_group.add_argument(
+            '-nh',
+            '--neo4j_host',
+            dest='neo4j_host',
+            type=str,
+            default='localhost',
+            help='Neo4j hostname')
+        neo4j_group.add_argument(
+            '-np',
+            '--neo4j_port',
+            dest='neo4j_port',
+            type=int,
+            default='7687',
+            help='Neo4j port')
+        neo4j_group.add_argument(
+            '-nu',
+            '--neo4j_user',
+            dest='neo4j_user',
+            type=str,
+            default='neo4j',
+            help='Neo4j user')
+        neo4j_group.add_argument(
+            '-npw',
+            '--neo4j_password',
+            dest='neo4j_password',
+            type=str,
+            help='Neo4j password')
+        neo4j_group.add_argument(
+            '-nd', '--neo4j_db',
+            dest='neo4j_db',
+            type=str,
+            help='Neo4j DB to import into')
+
+
+        mapping_group = parser.add_argument_group('Mapping')
+        mapping_group.add_argument(
+            '-i',
+            '--include',
+            dest='included_collections',
+            action='append',
+            help='Comma separated collections to be transferred. If not specified, transfer all not excluded ones')
+        mapping_group.add_argument(
+            '-x',
+            '--exclude',
+            dest='excluded_collections',
+            action='append',
+            default=[],
+            help='Comma separated collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.')
+        mapping_group.add_argument(
+            '-f',
+            '--exclude_fields',
+            dest='excluded_fields',
+            action='append',
+            default=[],
+            help='Comma separated fields to be ignored. Field names can have a * at the begin or end to match multiple fields.')
+        mapping_group.add_argument(
+            '-sl',
+            '--sublabels',
+            dest='sublabels',
+            action='append',
+            default=[],
+            help='List of <collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strings to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.')
+        mapping_group.add_argument(
+            '-r',
+            '--relations',
+            dest='relations',
+            action='append',
+            default=[],
+            help='List of <Collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of equal str/number values')
+        mapping_group.add_argument(
+            '-lr',
+            '--list_relations',
+            dest='list_relations',
+            action='append',
+            default=[],
+            help='List of <collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values')
+
+        parser.add_argument(
+            '--conf_export',
+            action='store_true',
+            help='Dump config and exit')
+        parser.add_argument(
+            '--conf',
+            action='append',
+            help='Read config file')
+        parser.add_argument('-v', '--verbose', action='store_true', help='Output Cypher')
+        parser.add_argument(
+            '-s', '--simulate', action='store_true', help="Don't connect to Neo4j")
+        parser.add_argument(
+            '-c',
+            '--create',
+            action='store_true',
+            help='Use CREATE instead of MERGE to create objects in Neo4j')
+
+        parser.add_argument(
+            '-k',
+            '--chunk_size',
+            dest='chunk_size',
+            type=int,
+            default='500',
+            help='processing objects chunk size')
+
+        parser.add_argument('mongo_db', help='MongoDB DB to be imported')
+        args = parser.parse_args()
+
+        print(f'mongo2neo4j v{__version__}')
+
+        # load config file
+        if args.conf is None and os.path.isfile('mongo2neo4j.conf'):
+            # by default we load a config from mongo2neo4j.conf if nothing else is specified and that file exists
+            args.conf = ['mongo2neo4j.conf']
+        if args.conf is not None:
+            for conf_fname in args.conf:
+                try:
+                    with open(conf_fname, encoding='utf-8') as f:
+                        parser.set_defaults(**json.load(f))
+                except FileNotFoundError:
+                    print(f'config file "{conf_fname}" not found')
+                    sys.exit(-1)
+
+        # Reload arguments to override config file values with command line values
+        args = parser.parse_args()
+
+        # dump config
+        if args.conf_export:
+            tmp_args = vars(args).copy()
+            del tmp_args['conf_export']  # Do not dump value of conf_export flag
+            del tmp_args['conf']  # Values already loaded
+            print(json.dumps(tmp_args,  indent=4, sort_keys=True))
+            sys.exit(-1)
+
+        requested_collections: None | Collections = None
+        if args.included_collections is not None:
+            requested_collections = set()
+            for c in args.included_collections:
+                for s in c.split(','):
+                    requested_collections.add(s)
+        args_excluded_collections: Collections = default_exclude_collections
+        for c in args.excluded_collections:
+            for s in c.split(','):
+                args_excluded_collections.add(s)
+        args_excluded_fields: Fields = default_fields_to_remove
+        if args.excluded_fields is not None:
+            for fields in args.excluded_fields:
+                for f in fields.split(','):
+                    args_excluded_fields.add(str(f))
+
+        start = time.perf_counter()
+        res = main(
+                args.mongo_host,
+                args.mongo_port,
+                args.mongo_db,
+                args.neo4j_host,
+                args.neo4j_port,
+                args.neo4j_user,
+                args.neo4j_password,
+                args.neo4j_db,
+                args.chunk_size,
+                args_excluded_collections,
+                requested_collections,
+                args_excluded_fields,
+                strlist2subLabels(args.sublabels),
+                strlist2relationSpecifications(args.relations),
+                strlist2relationSpecifications(args.list_relations),
+                args.create,
+                args.verbose,
+                args.simulate)
+        end = time.perf_counter()
+        print(f'total runtime: {str(datetime.timedelta(seconds=end-start)).split(".", maxsplit=1)[0]}')
+        sys.stdout.flush()
+        return res
+    except BrokenPipeError:
+        # Python flushes standard streams on exit; redirect remaining output
+        # to devnull to avoid another BrokenPipeError at shutdown
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        return 1  # Python exits with error code 1 on EPIPE
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-
-
-    mongo_group = parser.add_argument_group('MongoDB connection')
-    mongo_group.add_argument(
-        '-mh',
-        '--mongo_host',
-        dest='mongo_host',
-        type=str,
-        default='localhost',
-        help='MongoDB simple hostname or a full MongoDB URI of the form mongodb://<user>:<password>@<host>:<port>. Unix domain sockets with percent encoded socket path in the URI.')
-    mongo_group.add_argument(
-        '-mp',
-        '--mongo_port',
-        dest='mongo_port',
-        type=int,
-        default='27017',
-        help='MongoDB port')
-
-    neo4j_group = parser.add_argument_group('Neo4j connection')
-    neo4j_group.add_argument(
-        '-nh',
-        '--neo4j_host',
-        dest='neo4j_host',
-        type=str,
-        default='localhost',
-        help='Neo4j hostname')
-    neo4j_group.add_argument(
-        '-np',
-        '--neo4j_port',
-        dest='neo4j_port',
-        type=int,
-        default='7687',
-        help='Neo4j port')
-    neo4j_group.add_argument(
-        '-nu',
-        '--neo4j_user',
-        dest='neo4j_user',
-        type=str,
-        default='neo4j',
-        help='Neo4j user')
-    neo4j_group.add_argument(
-        '-npw',
-        '--neo4j_password',
-        dest='neo4j_password',
-        type=str,
-        help='Neo4j password')
-    neo4j_group.add_argument(
-        '-nd', '--neo4j_db',
-        dest='neo4j_db',
-        type=str,
-        help='Neo4j DB to import into')
-
-
-    mapping_group = parser.add_argument_group('Mapping')
-    mapping_group.add_argument(
-        '-i',
-        '--include',
-        dest='included_collections',
-        action='append',
-        help='Comma separated collections to be transferred. If not specified, transfer all not excluded ones')
-    mapping_group.add_argument(
-        '-x',
-        '--exclude',
-        dest='excluded_collections',
-        action='append',
-        default=[],
-        help='Comma separated collections to be excluded. Collection names can have a * at the begin or end to match multiple collections.')
-    mapping_group.add_argument(
-        '-f',
-        '--exclude_fields',
-        dest='excluded_fields',
-        action='append',
-        default=[],
-        help='Comma separated fields to be ignored. Field names can have a * at the begin or end to match multiple fields.')
-    mapping_group.add_argument(
-        '-sl',
-        '--sublabels',
-        dest='sublabels',
-        action='append',
-        default=[],
-        help='List of <collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strings to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.')
-    mapping_group.add_argument(
-        '-r',
-        '--relations',
-        dest='relations',
-        action='append',
-        default=[],
-        help='List of <Collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of equal str/number values')
-    mapping_group.add_argument(
-        '-lr',
-        '--list_relations',
-        dest='list_relations',
-        action='append',
-        default=[],
-        help='List of <collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values')
-
-    parser.add_argument(
-        '--conf_export',
-        action='store_true',
-        help='Dump config and exit')
-    parser.add_argument(
-        '--conf',
-        action='append',
-        help='Read config file')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Output Cypher')
-    parser.add_argument(
-        '-s', '--simulate', action='store_true', help="Don't connect to Neo4j")
-    parser.add_argument(
-        '-c',
-        '--create',
-        action='store_true',
-        help='Use CREATE instead of MERGE to create objects in Neo4j')
-
-    parser.add_argument(
-        '-k',
-        '--chunk_size',
-        dest='chunk_size',
-        type=int,
-        default='500',
-        help='processing objects chunk size')
-
-    parser.add_argument('mongo_db', help='MongoDB DB to be imported')
-    args = parser.parse_args()
-
-    print(f'mongo2neo4j v{__version__}')
-
-    # load config file
-    if args.conf is None and os.path.isfile('mongo2neo4j.conf'):
-        # by default we load a config from mongo2neo4j.conf if nothing else is specified and that file exists
-        args.conf = ['mongo2neo4j.conf']
-    if args.conf is not None:
-        for conf_fname in args.conf:
-            try:
-                with open(conf_fname, encoding='utf-8') as f:
-                    parser.set_defaults(**json.load(f))
-            except FileNotFoundError:
-                print(f'config file "{conf_fname}" not found')
-                sys.exit(-1)
-
-    # Reload arguments to override config file values with command line values
-    args = parser.parse_args()
-
-    # dump config
-    if args.conf_export:
-        tmp_args = vars(args).copy()
-        del tmp_args['conf_export']  # Do not dump value of conf_export flag
-        del tmp_args['conf']  # Values already loaded
-        print(json.dumps(tmp_args,  indent=4, sort_keys=True))
-        sys.exit(-1)
-
-    requested_collections: None | Collections = None
-    if args.included_collections is not None:
-        requested_collections = set()
-        for c in args.included_collections:
-            for s in c.split(','):
-                requested_collections.add(s)
-    args_excluded_collections: Collections = default_exclude_collections
-    for c in args.excluded_collections:
-        for s in c.split(','):
-            args_excluded_collections.add(s)
-    args_excluded_fields: Fields = default_fields_to_remove
-    if args.excluded_fields is not None:
-        for fields in args.excluded_fields:
-            for f in fields.split(','):
-                args_excluded_fields.add(str(f))
-
-    total_runtime = timeit.timeit(number=1, stmt=lambda:
-        main(
-            args.mongo_host,
-            args.mongo_port,
-            args.mongo_db,
-            args.neo4j_host,
-            args.neo4j_port,
-            args.neo4j_user,
-            args.neo4j_password,
-            args.neo4j_db,
-            args.chunk_size,
-            args_excluded_collections,
-            requested_collections,
-            args_excluded_fields,
-            strlist2subLabels(args.sublabels),
-            strlist2relationSpecifications(args.relations),
-            strlist2relationSpecifications(args.list_relations),
-            args.create,
-            args.verbose,
-            args.simulate))
-    print(f'total runtime: {str(datetime.timedelta(seconds=total_runtime)).split(".", maxsplit=1)[0]}')
+    sys.exit(console_main())
