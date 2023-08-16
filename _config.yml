@@ -1,6 +1,6 @@
 remote_theme: pages-themes/cayman@v0.2.0
 
 title: mongo2neo4j
-description: MongoDB Mongoose to Neo4j Importer
+description: MongoDB to Neo4j Importer
 
 show_downloads: false
