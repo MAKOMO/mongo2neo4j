@@ -40,7 +40,7 @@ The free Neo4j Desktop works well (see [Neo4j](https://neo4j.com/))
 
 The free SemSpect Graph App for Neo4j works well (see [SemSpect](https://www.semspect.de/))
 
-### Install the neo4j2mongodb script
+### Install `mongo2neo4j`
 
 ```sh
 % pip install mongo2neo4j
