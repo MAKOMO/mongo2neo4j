@@ -6,6 +6,7 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v0.3.0 (08/16/2023) : src layout, pypip package
 #  v0.2.0 (08/10/2023) :
 #     - adds recursive processing of list of objects
 #     - adds options to link nodes via relations on matching field values that are not MongoDB ObjectIds
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
 
 __author__  = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 
 # Types

@@ -3,3 +3,5 @@ pyright==1.1.321
 ruff>=0.0.277
 pylint==2.17.5
 pre-commit>=3.3.3
+twine>=4.0.2
+build>=0.10.0
