@@ -1,6 +1,6 @@
 # Populate MongoDB with sample data
 
-The following is the complete workflow using randomly generated sample data:
+The following briefly describes the complete workflow of mongo2neo4j using randomly generated sample data:
 
 1. generation of sample data and import into MongoDB
 2. extraction from MongoDB, transformation and import into Neo4j
