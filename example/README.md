@@ -16,7 +16,7 @@ You need to have [Node.js](https://nodejs.org/en/download) and npm installed on 
 
 ## Generate data and load into MongoDB
 
-The sample data simulates a typical web application using to the [MEAN-stack](https://en.wikipedia.org/wiki/MEAN_(solution_stack)) with the help of the [mongoose](https://mongoosejs.com/) object modeling framework. The data set contains users with different subscriptions who have placed orders consisting of a set of products.
+The sample data simulates a typical web application using to the [MEAN-stack](https://en.wikipedia.org/wiki/MEAN_(solution_stack)) with the help of the [mongoose](https://mongoosejs.com/) object modeling framework. The data set contains users with different subscriptions who have placed orders consisting of a set of products. You can adjust the number of objects in the sample data by changing the settings in [generateDummyData.js](generateDummyData.js).
 
 In case your MongoDB deamon is set up and running with default setting just call the following to create and populate a MongoDB databases called `mydatabase`:
 
