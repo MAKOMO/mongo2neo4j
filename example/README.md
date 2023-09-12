@@ -1,5 +1,11 @@
 # Populate MongoDB with sample data
 
+The following is the complete workflow using randomly generated sample data:
+
+1. generation of sample data and import into MongoDB
+2. extraction from MongoDB, transformation and import into Neo4j
+3. exploration with SemSpect
+
 ## Preparation
 
 You need to have [Node.js](https://nodejs.org/en/download) and npm installed on your system. Furthermore the data generator requires the mongoose library:
@@ -9,6 +15,8 @@ You need to have [Node.js](https://nodejs.org/en/download) and npm installed on 
 ```
 
 ## Generate data and load into MongoDB
+
+The sample data simulates a typical web application using to the [MEAN-stack](https://en.wikipedia.org/wiki/MEAN_(solution_stack)) with the help of the [mongoose](https://mongoosejs.com/) object modeling framework. The data set contains users with different subscriptions who have placed orders consisting of a set of products.
 
 In case your MongoDB deamon is set up and running with default setting just call the following to create and populate a MongoDB databases called `mydatabase`:
 
@@ -40,7 +48,7 @@ Use `--uri='mongodb://localhost:27017'` to set host and port.
 
 ## Preparation
 
-You need Neo4j installed. The most easiest way is to download and install [Neo4j Desktop](https://neo4j.com/download-center/#desktop) which is a desktop UI that allows to manage Neo4j DBMS on your local system. Furthermore, it's the most comfortable way of installing the [SemSpect Graph App](https://doc.semspect.de/docs/neo4j-graph-app/) for Neo4j.
+The Neo4j application must be installed. The most easiest way is to download and install [Neo4j Desktop](https://neo4j.com/download-center/#desktop) which is a desktop UI that allows to manage Neo4j DBMS on your local system. Furthermore, it's the most comfortable way of installing the [SemSpect Graph App](https://doc.semspect.de/docs/neo4j-graph-app/) for Neo4j.
 
 Once you have installed Neo4j Desktop:
 
@@ -50,7 +58,7 @@ Once you have installed Neo4j Desktop:
 
 ## Read the MongoDB databases and import into Neo4j
 
-When both - MongoDB and Neo4j - are running with the default settings you simply can load the data from MongoDB and import into Neo4j just by specifying the Neo4j password (using default user `neo4j`) and the MongoDB database (the data generation script creates `mydatabase` as default). 
+When both - MongoDB and Neo4j - are running with the default settings you simply can load the data from MongoDB and import into Neo4j just by specifying the Neo4j password (here we use the default user `neo4j`) and the MongoDB database (using the `mydatabase` database that was created by the generation script as default). 
 
 ```
 # mongo2neo4j --neo4j_password=<your-password> mydatabase --conf mongo2neo4j.conf
@@ -70,15 +78,17 @@ The configuration file `mongo2neo4j.conf` is optional but shows some key configu
 }
 ```
 
-The **sublabels configuration** creates additional Neo4j label for the value found in the subscription field (wich are either `free`, `home`, `pro` or no value) for each object in the `user` collection. A postfix `_user` will be added to each label and the objec ts which do not have any value will get the `no subscription` label.
+The **sublabels configuration** creates an additional Neo4j label for the value found in the subscription field (which are either `free`, `home`, `pro` or no value in our sample data) for each object in the `user` collection. A postfix `_user` will be added to each label and the objects which do not have any value will get the `no subscription` label.
 
-The **relations configuration** furthermore adds an additional relationship to the Neo4j graph from objects in the `user` collection to objects in the `countries` collection whenever the field `country` match the field `isoname`.
+The **relations configuration** furthermore adds an additional relationship to the Neo4j graph from objects in the `user` collection to objects in the `countries` collection whenever the field `country` matches the field `isoname`.
 
 Given this configuration the resulting Neo4j graph schema looks as follows (shows the labels used in the graph data and all relationships in between them):
 
 ![graph database schema of generated sample data in Neo4j](images/neo4j-graph-schema.png)
 
-Note: you can skip data generation and data import by [importing the also supplied Neo4j dump](https://neo4j.com/docs/desktop-manual/current/operations/create-from-dump/) (`neo4j.dump`) directly into a Neo4j DBMS.
+The objects of each collection get at least one Neo4j label named after the collection name (`user`, `orders`, `products`, `countries`). However, there is an additional label called `orders_products`. That label is created by mongo2neo4j automatically and assigned to each JSON object in the array of the products slot of the objects in the orders collection (gray box in the picture above).
+
+Note: you can skip data generation and data import by [importing the also supplied Neo4j dump](https://neo4j.com/docs/desktop-manual/current/operations/create-from-dump/) (file `neo4j.dump`) directly into a Neo4j DBMS.
 
 # Explore the graph data with SemSpect
 
