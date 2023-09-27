@@ -6,6 +6,7 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v0.4.0 (09/26/2023) : pytests, fixes
 #  v0.3.0 (08/16/2023) : src layout, pypip package
 #  v0.2.0 (08/10/2023) :
 #     - adds recursive processing of list of objects
@@ -41,16 +42,16 @@ if TYPE_CHECKING:
 
 __author__  = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 
 
 # Types
 
 Item = dict[str, Any]
 Items = list[Item]
-Link = list[str] # of length 2 holding source and target IDs
-Links = list[Link]
-Relations = dict[str, Links] # associates relation name to Link
+Link = tuple[str,str] # holds source and target IDs
+Links = set[Link]
+Relations = dict[str, Links] # associates relation name to Links
 Collections = set[str]
 Fields = set[str]
 NodeLabels = dict[str, str] # associating node IDs to labels
@@ -189,16 +190,16 @@ def apply_recursive(func: Callable[[Any], Any], obj: Any) -> Any:
 def add_relation(relations: Relations, rel: str, new_link: Link) -> None:
     """Adds destructively the source-target tuple of new link under key rel to the given relations map"""
     if rel in relations:
-        relations[rel].append(new_link)
+        relations[rel].add(new_link)
     else:
-        relations[rel] = [new_link]
+        relations[rel] = {new_link}
 
 
 # adds the source-target tuples of new_links under rel to relations
 def add_relations(relations: Relations, rel: str, new_links: Links) -> None:
     """Adds destructively the source-target tuples of new links under key rel to the given relations map"""
     if rel in relations:
-        relations[rel].extend(new_links)
+        relations[rel].update(new_links)
     else:
         relations[rel] = new_links
 
@@ -248,48 +249,71 @@ def flatten_and_cleanse(
                 not key.endswith(tuple(suppress_endswith)) and
                 value is not None and
                 value != '' and value != []):
+            uuid_hex:str
             new_key = parent_key + separator + key if parent_key else key
             if isinstance(value, MutableMapping):
-                rec_res, rec_relations, rec_array_fields, rec_objects = flatten_and_cleanse(
-                        collection,
-                        value,
-                        suppress,
-                        suppress_startswith,
-                        suppress_endswith,
-                        new_key,
-                        node_id,
-                        separator)
-                res.update(rec_res)
-                update_relations(relations, rec_relations)
-                array_fields.update(rec_array_fields)
-                update_objects(additional_objects, rec_objects)
+                if mid in value:
+                    uuid_hex = str(value[mid])
+                    value[mid] = uuid_hex
+                    new_label = f'{collection}_{new_key}'
+                    # we create a new object and link it
+                    rec_res, rec_relations, rec_array_fields, rec_objects = flatten_and_cleanse(
+                                new_label,
+                                value,
+                                suppress,
+                                suppress_startswith,
+                                suppress_endswith,
+                                '',
+                                '',
+                                separator)
+                    add_object(additional_objects, new_label, [rec_res])
+                    update_relations(relations, rec_relations)
+                    array_fields.update(rec_array_fields)
+                    update_objects(additional_objects, rec_objects)
+                    add_relation(relations, key, (node_id, uuid_hex))
+                else:
+                    # we flatten the object
+                    rec_res, rec_relations, rec_array_fields, rec_objects = flatten_and_cleanse(
+                            collection,
+                            value,
+                            suppress,
+                            suppress_startswith,
+                            suppress_endswith,
+                            new_key,
+                            node_id,
+                            separator)
+                    res.update(rec_res)
+                    update_relations(relations, rec_relations)
+                    array_fields.update(rec_array_fields)
+                    update_objects(additional_objects, rec_objects)
             elif isinstance(value, ObjectId):
                 id_str: str = str(value)
                 if new_key != mid and node_id != '':
-                    add_relation(relations, new_key, [node_id, id_str])
+                    add_relation(relations, new_key, (node_id, id_str))
                 else:
                     res[new_key] = id_str
             elif isinstance(value, MutableSequence):
                 if all(isinstance(v, str) for v in value):
-                    # homogeneous list of numbers or strings
+                    # homogeneous list of strings
                     res[new_key] = value
-                    array_fields.add(new_key) # mark as field of type array
+                    array_fields.add(new_key) # mark as field of type array, to have sublabels generated correctly on demand
                 elif (all(isinstance(v, int) for v in value) or
                         all(isinstance(v, float) for v in value)):
-                    # homogeneous list of numbers (not marked as field of type array as field is ignored, but links are generated)
+                    # homogeneous list of numbers (not marked as field of type array, to have field ignored on sublabel generation)
                     res[new_key] = value
                 elif all(isinstance(v, ObjectId) for v in value) and new_key != mid and node_id != '':
                     # homogeneous list of ObjectIds
                     # we discard the field, but establish the relations
-                    add_relations(relations, new_key, [[node_id, str(v)] for v in value])
+                    add_relations(relations, new_key, {(node_id, str(v)) for v in value})
                 elif all(isinstance(v, MutableMapping) for v in value):
+                    # list of objects
+                    new_label = f'{collection}_{new_key}'
                     uuids = []
                     for v in value:
                         # if there is no unique object id we generate one
-                        uuid_hex:str = (str(v[mid]) if mid in v else uuid.uuid4().hex)
+                        uuid_hex = (str(v[mid]) if mid in v else uuid.uuid4().hex)
                         uuids.append(uuid_hex)
                         v[mid] = uuid_hex
-                        new_label = f'{collection}_{new_key}'
                         rec_res, rec_relations, rec_array_fields, rec_objects = flatten_and_cleanse(
                                 new_label,
                                 v,
@@ -305,7 +329,7 @@ def flatten_and_cleanse(
                         update_objects(additional_objects, rec_objects)
                     # add relations between this object and all generated ids
                     for uuid_hex in uuids:
-                        add_relation(relations, new_key, [node_id, uuid_hex])
+                        add_relation(relations, new_key, (node_id, uuid_hex))
             else:
                 res[new_key] = value
     return res, relations, array_fields, additional_objects
@@ -550,7 +574,7 @@ def process_data(
             cnt:int = 0
             for chunk in yield_rows(cursor, chunk_size):
                 cleansed_data: Items = []
-                # first we convert all objects in per chunk and extract its relations
+                # first we convert all objects in this chunk and extract its relations
                 for obj in chunk:
                     cnt += 1
                     obj_data, obj_relations, obj_array_fields, obj_objects = flatten_and_cleanse(collection, obj, suppress, suppress_startswith, suppress_endswith)
@@ -578,7 +602,6 @@ def process_data(
 
     for ao_label, ao_objects in additional_objects.items():
         if not match_collection(ao_label, excluded_collections):
-            neo4j_create_constraint(session, verbose, ao_label, mid)
             # register node_ids in node_label hash for new objects, skip others
             new_objects:Items = []
             for ao_object in ao_objects:
@@ -589,6 +612,7 @@ def process_data(
             # create nodes for new additional internal objects using the created composite labels
             item_count = len(new_objects)
             if item_count>0:
+                neo4j_create_constraint(session, verbose, ao_label, mid)
                 print(f"*** processing {item_count} {ao_label} additional internal nodes'")
                 printProgressBar(0, item_count)
                 cnt = 0
@@ -608,27 +632,44 @@ def process_data(
     for collection, relations in all_relations.items():
         # create relations (also per chunk)
         for rel, all_links in relations.items():
-            links = [ll for ll in all_links if ll[0] in node_label and ll[1] in node_label] # only create relations between labeled nodes
-            item_count = len(links)
-            if item_count > 0 and len(links[0]) > 1:
-                print(f"*** processing {item_count} {rel} relation of collection '{collection}'")
+            # collected links by source and target label indexed by '<source_label>$<target_label>' with $ not allowed in MongoDB collection names
+            links_by_labels:dict[str, Links] = {}
+            for l in all_links:
+                if l[0] in node_label and l[1] in node_label:
+                    idx = f'{node_label[l[0]]}${node_label[l[1]]}'
+                    if idx in links_by_labels:
+                        links_by_labels[idx].add(l)
+                    else:
+                        links_by_labels[idx] = {l}
+                elif l[0] not in node_label:
+                    print(f'missing source object: ObjectId("{l[0]}")')
+                elif l[1] not in node_label:
+                    print(f'missing object linked from {node_label[l[0]]} ObjectId("{l[0]}") by attribute "{rel}": ObjectId("{l[1]}")')
+            for links in links_by_labels.values():
+                item_count = len(links)
+                if item_count > 0:
+                    # Initial Progress Bar Call
+                    printProgressBar(0, item_count)
+                    cnt = 0
+                    # assuming same source and target labels for all links
+                    link = next(iter(links))
+                    source_label: str = node_label[link[0]]
+                    target_label: str = node_label[link[1]]
 
-                # Initial Progress Bar Call
-                printProgressBar(0, item_count)
-                cnt = 0
-                source_label: str = node_label[links[0][0]]
-                target_label: str = node_label[links[0][1]]
-                for links_chunk in chunker(chunk_size, links):
-                    cnt += len(links_chunk)
-                    data = {'links': links_chunk}
-                    query = (
-                        f'UNWIND $links as row MATCH (a:`{source_label}`), (b:`{target_label}`) '
-                        f"WHERE a.{mid} = row[0] and b.{mid} = row[1] {('CREATE' if create else 'MERGE')} (a)-[:`{rel}`]->(b)")
-                    neo4j_run_write_query(session, verbose, query, **data)
-                    # Update Progress Bar
-                    printProgressBar(cnt, item_count)
-                # print new line on complete
-                print()
+                    print(f"*** processing {item_count} {rel} relation ({source_label}, {target_label}) of collection '{collection}'")
+
+                    for links_chunk in chunker(chunk_size, links):
+                        cnt += len(links_chunk)
+                        data = {'links': links_chunk}
+                        query = (
+                            f'UNWIND $links as row MATCH (a:`{source_label}`), (b:`{target_label}`) '
+                            f"WHERE a.{mid} = row[0] and b.{mid} = row[1] {('CREATE' if create else 'MERGE')} (a)-[:`{rel}`]->(b)")
+                        neo4j_run_write_query(session, verbose, query, **data)
+                        # Update Progress Bar
+                        printProgressBar(cnt, item_count)
+                    # print new line on complete
+                    print()
+
 
    # add specified relations
 
@@ -639,21 +680,21 @@ def process_data(
         # Initial Progress Bar Call
         printProgressBar(0, item_count)
         cnt = 0
-        for source, target in additional_relations:
+        for rel_source, rel_target in additional_relations:
             cnt += 1
-            if source[0] in node_label.values() and target[0] in node_label.values():
+            if rel_source[0] in node_label.values() and rel_target[0] in node_label.values():
                 # only process additional relation if nodes in source and target labels exist
                 neo4j_create_index(
                     session,
                     verbose,
-                    source[0],
-                    source[1])
+                    rel_source[0],
+                    rel_source[1])
                 neo4j_create_index(
                     session,
                     verbose,
-                    target[0],
-                    target[1])
-                neo4j_add_relations(session, verbose, chunk_size, apoc_installed, create, source, target)
+                    rel_target[0],
+                    rel_target[1])
+                neo4j_add_relations(session, verbose, chunk_size, apoc_installed, create, rel_source, rel_target)
             # Update Progress Bar
             printProgressBar(cnt, item_count)
         # print new line on complete
@@ -665,21 +706,21 @@ def process_data(
         # Initial Progress Bar Call
         printProgressBar(0, item_count)
         cnt = 0
-        for source, target in additional_list_relations:
+        for rel_source, rel_target in additional_list_relations:
             cnt += 1
-            if source[0] in node_label.values() and target[0] in node_label.values():
+            if rel_source[0] in node_label.values() and rel_target[0] in node_label.values():
                 # only process additional list relation if nodes in source and target labels exist
                 neo4j_create_index(
                     session,
                     verbose,
-                    source[0],
-                    source[1])
+                    rel_source[0],
+                    rel_source[1])
                 neo4j_create_index(
                     session,
                     verbose,
-                    target[0],
-                    target[1])
-                neo4j_add_relations(session, verbose, chunk_size, apoc_installed, create, source, target, list_source=True)
+                    rel_target[0],
+                    rel_target[1])
+                neo4j_add_relations(session, verbose, chunk_size, apoc_installed, create, rel_source, rel_target, list_source=True)
             # Update Progress Bar
             printProgressBar(cnt, item_count)
         # print new line on complete

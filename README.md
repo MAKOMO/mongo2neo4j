@@ -6,6 +6,8 @@
 [![Pylint](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/pylint.yaml/badge.svg)](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/pylint.yaml)
 [![Ruff](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/ruff.yaml/badge.svg)](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/ruff.yaml)
 [![Mypy](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/mypy.yml/badge.svg)](https://github.com/MAKOMO/mongo2neo4j/actions/workflows/mypy.yml)
+[![pytest](https://github.com/artisan-roaster-scope/artisan/actions/workflows/pytest.yaml/badge.svg?branch=master)](https://github.com/artisan-roaster-scope/artisan/actions/workflows/pytest.yaml)
+![coverage](./images/coverage.svg)
 
 
 ## What is mongo2neo4j?
@@ -20,7 +22,7 @@ Imagine you just released your latest [MEAN-stack](https://en.wikipedia.org/wiki
 
 ![](https://github.com/MAKOMO/mongo2neo4j/blob/main/images/semspect.jpg?raw=true)
 
-As [SemSpect](https://www.semspect.de/) is layered on top of the graph database system [Neo4j](https://neo4j.com/) as graph app, your [MongoDB](https://www.mongodb.com/) data needs first to be established in [Neo4j](https://neo4j.com/). This can be easily achieved using the mongo2neo4j tool.
+As [SemSpect](https://www.semspect.de/) is layered on top of the graph database system [Neo4j](https://neo4j.com/) as graph app, your [MongoDB](https://www.mongodb.com/) data needs first to be established in [Neo4j](https://neo4j.com/). This can be easily achieved using the `mongo2neo4j` tool.
 
 
 ## How does it work?
@@ -48,7 +50,7 @@ The free SemSpect Graph App for Neo4j works well (see [SemSpect](https://www.sem
 
 ## Run the importer
 
-You can run the `mongo2neo4j`importer from the shell by providing at least the name of the MongoDB the data should be imported from. If not specified the default `neo4j` DB is targeted with the default `neo4j` user. It is likely that you will have to add passwords.
+You can run the `mongo2neo4j`importer from the shell by providing at least the name of the [MongoDB](https://www.mongodb.com/) DB the data should be imported from. If not specified the default `neo4j` DB is targeted with the default `neo4j` user. It is likely that you will have to add passwords.
 
 ```sh
 % mongo2neo4j \
