@@ -6,6 +6,7 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v0.5.0 (09/28/2023) : makes import idempotent
 #  v0.4.0 (09/26/2023) : pytests, fixes
 #  v0.3.0 (08/16/2023) : src layout, pypip package
 #  v0.2.0 (08/10/2023) :
@@ -23,7 +24,6 @@ import json
 import time
 import argparse
 import datetime
-import uuid
 from collections.abc import MutableMapping, MutableSequence, Callable, Iterator
 from itertools import zip_longest
 from bisect import bisect
@@ -40,9 +40,9 @@ if TYPE_CHECKING:
     from pymongo.database import Database
     from pymongo.cursor import Cursor
 
-__author__  = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard'
+__author__  = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard, Maximilian Wenzel'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 
 # Types
@@ -309,9 +309,9 @@ def flatten_and_cleanse(
                     # list of objects
                     new_label = f'{collection}_{new_key}'
                     uuids = []
-                    for v in value:
+                    for i, v in enumerate(value):
                         # if there is no unique object id we generate one
-                        uuid_hex = (str(v[mid]) if mid in v else uuid.uuid4().hex)
+                        uuid_hex = (str(v[mid]) if mid in v else f'{node_id}{new_label}{i}')
                         uuids.append(uuid_hex)
                         v[mid] = uuid_hex
                         rec_res, rec_relations, rec_array_fields, rec_objects = flatten_and_cleanse(

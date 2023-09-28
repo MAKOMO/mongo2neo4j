@@ -65,7 +65,9 @@ Further configuration options are listed on calling
 % mongo2neo4j -h
 ```
 
-See [Script Arguments](https://github.com/MAKOMO/mongo2neo4j/wiki/Script-Arguments) for the full list of available arguments.
+See [Script Arguments](https://github.com/MAKOMO/mongo2neo4j/wiki/Script-Arguments) for the full list of available arguments and the [example](example/README.md) documenting the workflow of mongo2neo4j using randomly generated sample data.
+
+
 
 
 NOTE: *if the [APOC plugin](https://neo4j.com/docs/apoc/) is installed in the Neo4j DB, the faster and memory-effective `apoc.periodic.iterate` method is used to generate nodes and sublabels.*
