@@ -65,7 +65,7 @@ Further configuration options are listed on calling
 % mongo2neo4j -h
 ```
 
-See [Script Arguments](https://github.com/MAKOMO/mongo2neo4j/wiki/Script-Arguments) for the full list of available arguments and the [example](example/README.md) documenting the workflow of mongo2neo4j using randomly generated sample data.
+See [Script Arguments](https://github.com/MAKOMO/mongo2neo4j/wiki/Script-Arguments) for the full list of available arguments and the [example](https://github.com/MAKOMO/mongo2neo4j/blob/main/example/README.md) documenting the workflow of mongo2neo4j using randomly generated sample data.
 
 
 

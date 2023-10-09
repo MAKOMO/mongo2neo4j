@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 
 __author__  = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard, Maximilian Wenzel'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 
 
 # Types
@@ -91,7 +91,7 @@ default_exclude_collections: Collections = {
 
 
 def split_excludes(suppress: Fields) -> tuple[Fields, Fields, Fields]:
-    """Splits the given exclude field specifications into equal, startswith and endswith field supress matchers"""
+    """Splits the given exclude field specifications into equal, startswith and endswith field suppress matchers"""
     res_suppress: Fields = set()
     res_suppress_startswith: Fields = set()
     res_suppress_endswith: Fields = set()
@@ -114,7 +114,7 @@ def match_collection(collection: str, excluded_collections:Collections) -> bool:
     return False
 
 def remove_excluded_collections(collections: Collections, excluded_collections: Collections) -> Collections:
-    """Removes all collections from the given <collections> that matchs any pattern in excluded_collections"""
+    """Removes all collections from the given <collections> that matches any pattern in excluded_collections"""
     return {c for c in collections if not match_collection(c, excluded_collections)}
 
 
@@ -673,7 +673,7 @@ def process_data(
 
    # add specified relations
 
-    # create indicies on sources and uniqueness constraint on targets of additional relations
+    # create indices on sources and uniqueness constraint on targets of additional relations
     if additional_relations:
         item_count = len(additional_relations)
         print(f'*** processing {item_count} additional relations')
@@ -868,7 +868,8 @@ def main(
             driver: Driver
             with GraphDatabase.driver(  # pylint: disable=not-context-manager
                     f'neo4j://{neo4j_host}:{neo4j_port}',
-                    auth=(neo4j_user, neo4j_password)) as driver:
+                    auth=(neo4j_user, neo4j_password),
+                    telemetry_disabled=True) as driver:
                 session: Session
                 with driver.session(database=neo4j_db) as session:
                     process_data(
