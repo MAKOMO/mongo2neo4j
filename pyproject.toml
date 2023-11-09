@@ -49,8 +49,33 @@ extend-exclude = '''
 
 [tool.pylint.MASTER]
 load-plugins = [
-    'pylint.extensions.no_self_use'
+    'pylint.extensions.bad_builtin', # suggest comprehension over filter/join/map
+    'pylint.extensions.check_elif',
+    'pylint.extensions.code_style', # suggests the := operator; NOT YET
+    'pylint.extensions.comparison_placement',
+    'pylint.extensions.confusing_elif', # nested if => functions; NOT YET
+    'pylint.extensions.docparams',
+    'pylint.extensions.no_self_use',
+    'pylint.extensions.docstyle',
+    'pylint.extensions.eq_without_hash',
+    'pylint.extensions.for_any_all',
+    'pylint.extensions.overlapping_exceptions',
+    'pylint.extensions.private_import',
+    'pylint.extensions.set_membership',
+    'pylint.extensions.typing',
+    'pylint.extensions.redefined_variable_type',
+    'pylint.extensions.mccabe'
 ]
+
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use.
+jobs = "0"
+
+# Minimum supported python version
+py-version = "3.1"
+
+# Pickle collected data for later comparisons.
+persistent = "no"
 
 [tool.pylint.'MESSAGES CONTROL']
 
@@ -109,7 +134,33 @@ enable='''c-extension-no-member,'''
 [tool.mypy]
 files = ["src/mongo2neo4j/*.py"]
 python_version = "3.11"
+
+# Ensure full coverage
 check_untyped_defs = true
+disallow_incomplete_defs = true
+#disallow_untyped_calls = true # Not yet
+#disallow_untyped_defs = true # Not yet
+disallow_untyped_decorators = true
+#disallow_any_unimported = true # Not yet
+
+# Restrict dynamic typing
+#disallow_any_generics = true # Not yet
+disallow_subclassing_any = true
+warn_return_any = true
+
+# Some more checks
+local_partial_types = true
+strict_equality = true
+
+# Know exactly what we're doing
+warn_redundant_casts = true
+warn_unused_configs = true
+#warn_unused_ignores = true
+warn_unreachable = true
+#show_error_codes = true
+
+# Explicit is better than implicit
+no_implicit_optional = true
 
 
 ## ruff conf
@@ -123,7 +174,7 @@ check_untyped_defs = true
 ## next: flake8-use-pathlib (PTH), flake8-print (T20)
 select = ["E", "F", "UP", "B", "A", "YTT", "COM", "C4", "DTZ", "PIE", "RSE", "RET", "SIM", "ARG", "PLE", "PLR", "PLW", "INT"]
 
-format = "pylint" # one of: text, json, junit, grouped, github, gitlab, pylint, azure
+output-format = "pylint" # one of: text, json, junit, grouped, github, gitlab, pylint, azure
 
 # Same as Black.
 line-length = 100

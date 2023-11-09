@@ -208,13 +208,13 @@ def update_relations(relations: Relations, new_relations: Relations) -> None:
     for (key, values) in new_relations.items():
         add_relations(relations, key, values)
 
-def add_object(objects: dict[str, Items], collection: str, new_objects: Items):
+def add_object(objects: dict[str, Items], collection: str, new_objects: Items) -> None:
     if collection in objects:
         objects[collection].extend(new_objects)
     else:
         objects[collection] = new_objects
 
-def update_objects(objects: dict[str, Items], new_objects: dict[str, Items]):
+def update_objects(objects: dict[str, Items], new_objects: dict[str, Items]) -> None:
     """Adds destructively the new_objects to the given collection-objects map"""
     for (collection, col_objects) in new_objects.items():
         add_object(objects, collection, col_objects)
@@ -351,7 +351,7 @@ def split_attributes(dictionary: Item) -> tuple[Item, Item]:
 
 # see https://stackoverflow.com/a/34325723
 # Progress Bar Printing Function
-def printProgressBar(iteration, total = 100, prefix = '', suffix = '', decimals = 1, length = 70, fill = '█', printEnd = '\r'):
+def printProgressBar(iteration:int, total:int = 100, prefix:str = '', suffix:str = '', decimals:int = 1, length:int = 70, fill:str = '█', printEnd:str = '\r') -> None:
     """Outputs a progress bar to stdout"""
     percent = f'{100 * (iteration / float(total)):.{decimals}f}'
     filledLength = int(length * iteration // total)
@@ -376,7 +376,7 @@ def render_value(value: Any) -> str:
     return f"'{value}'"
 
 
-def neo4j_output_query(query, **kwargs) -> None:
+def neo4j_output_query(query:str, **kwargs:Any) -> None:
     """Outputs the given Cypher query to stdout."""
     result = query
     for key, value in kwargs.items():
@@ -386,7 +386,7 @@ def neo4j_output_query(query, **kwargs) -> None:
 
 
 def neo4j_run_read_query(
-        session: None | Session, verbose: bool, query, **kwargs) -> None:
+        session: None | Session, verbose: bool, query:str, **kwargs:Any) -> None:
     """Sends the given query to Neo4j and outputs it to stdout if verbose is True."""
 
     def work(tx):  # pylint: disable=invalid-name
@@ -399,7 +399,7 @@ def neo4j_run_read_query(
 
 
 def neo4j_run_write_query(
-        session: None | Session, verbose: bool, query, **kwargs) -> None:
+        session: None | Session, verbose: bool, query:str, **kwargs:Any) -> None:
     """Sends the given query to Neo4j and outputs it to stdout if verbose is True."""
 
     def work(tx):  # pylint: disable=invalid-name
