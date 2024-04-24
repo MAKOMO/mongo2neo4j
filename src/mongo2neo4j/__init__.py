@@ -5,6 +5,11 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v1.0.1 (04/22/2024) :
+#     - adds <super_label> to sublabel spec to play nice with SemSpects subtree facets
+#     - escapes single quites in sublabels
+#     - renames attrib to field to correspond to the MongoDB terminology
+#     - moved to Python 3.12
 #  v1.0.0 (04/12/2024) : minor rework and lib updates
 #  v0.5.0 (09/28/2023) : makes import idempotent
 #  v0.4.0 (09/26/2023) : pytests, fixes
@@ -43,7 +48,7 @@ if TYPE_CHECKING:
 
 __author__ = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard, Maximilian Wenzel'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 # Types
@@ -58,13 +63,13 @@ Fields = set[str]
 NodeLabels = dict[str, str]  # associating node IDs to labels
 LabelRelations = dict[str, Relations]  # associates labels to relations
 SubLabel = tuple[
-    str, str, str, str
-]  # collection, field, sublabel postfix, OTHERS-sublabel (last two can be the empty string)
+    str, str, str, str, str
+]  # collection, field, sublabel postfix, super_label, OTHERS-sublabel (last three can be the empty string)
 SubLabels = list[SubLabel]
 CollectionField = tuple[str, str]  # collection and field
 RelationSpecification = tuple[
     CollectionField, CollectionField
-]  # source collection-attrib tuple & target collection-attrib tuple
+]  # source collection-field tuple & target collection-field tuple
 RelationSpecifications = list[RelationSpecification]
 
 
@@ -74,6 +79,7 @@ class SubSpec(TypedDict):
     discriminator: str
     value_type: type  # one of {str, list, bool}
     postfix: str  # empty string by default
+    super_label: str # empty string by default
     others: str  # empty string by default
     distinct_values: NotRequired[
         set[str]
@@ -130,7 +136,7 @@ def remove_excluded_collections(
 
 
 def strlist2subLabels(sl: list[str]) -> SubLabels:
-    """Takes a list of sublabel string specifications of the form <collection>.<field>[.<postfix>][,<others>] and turns it into a SubLabels specification <label=collection, discriminator=field, postfix=postfix, others=others>."""
+    """Takes a list of sublabel string specifications of the form <collection>.<field>[.<postfix>][:<super_label>][,<others>] and turns it into a SubLabels specification <label=collection, discriminator=field, postfix=postfix, super_label=super_label, others=others>."""
     sublabels: SubLabels = []
     for subl in sl:
         el: list[str] = subl.split(',')[:2]
@@ -138,11 +144,16 @@ def strlist2subLabels(sl: list[str]) -> SubLabels:
         if len(el) > 1:
             others = el[1]
         if len(el) > 0:
-            parts: list[str] = el[0].split('.')[:3]
-            if len(parts) == 2:
-                parts += ['']
-            if len(parts) == 3:
-                sublabels.append((parts[0], parts[1], parts[2], others))
+            remaining: list[str] = el[0].split(':')[:2]
+            super_label: str = ''
+            if len(remaining) > 1:
+                super_label = remaining[1]
+            if len(remaining) > 0:
+                parts: list[str] = remaining[0].split('.')[:3]
+                if len(parts) == 2:
+                    parts += ['']
+                if len(parts) == 3:
+                    sublabels.append((parts[0], parts[1], parts[2], super_label, others))
     return sublabels
 
 
@@ -250,7 +261,7 @@ def flatten_and_cleanse(  # pylint: disable=too-complex, too-many-arguments, too
     objectId(_) converted to strings and keys in the 'suppress', 'suppress_startswith', 'suppress_endswith' sets
     removed. As second result a dictionary associating relation names
     with list of tuples of source and target node ids.
-    As third result a set of attributes of type list.
+    As third result a set of fields of type list.
     As last result a dict associating labels with additional objects created."""
     res: Item = {}
     relations: Relations = {}
@@ -364,7 +375,7 @@ def flatten_and_cleanse(  # pylint: disable=too-complex, too-many-arguments, too
 
 
 def split_attributes(dictionary: Item) -> tuple[Item, Item]:
-    """Splits the given attributes into those with primitive values and those with \
+    """Splits the given fields into those with primitive values and those with \
         non-primitive ones"""
     primitive: Item = {}
     non_primitive: Item = {}
@@ -495,6 +506,9 @@ def neo4j_add_relations(  # pylint: disable=too-many-arguments
         query = f'{match_clause} {create_clause}'
         neo4j_run_write_query(session, verbose, query)
 
+def escape_neo4j_label(label:str) -> str:
+    translations: dict[str, str | int | None] = {"'":  "\\\\'"}
+    return label.translate(str.maketrans(translations))
 
 def neo4j_add_sublabel(  # pylint: disable=too-many-arguments
     session: None | Session,
@@ -614,7 +628,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
             cursor: Cursor[Any] = database[collection].find({}, batch_size=chunk_size)
             chunk: Items
 
-            # Establish constraints on '_id' attribute of label 'collection'
+            # Establish constraints on '_id' fields of label 'collection'
             # NOTE: the use of $ query parameters for constraint name and label
             #       does not work here, so we use Python fstring substitution
             neo4j_create_constraint(session, verbose, collection, mid)
@@ -693,7 +707,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     print(f'missing source object: ObjectId("{l[0]}")')
                 elif l[1] not in node_label:
                     print(
-                        f'missing object linked from {node_label[l[0]]} ObjectId("{l[0]}") by attribute "{rel}": ObjectId("{l[1]}")'
+                        f'missing object linked from {node_label[l[0]]} ObjectId("{l[0]}") by field "{rel}": ObjectId("{l[1]}")'
                     )
             for links in links_by_labels.values():
                 if (item_count := len(links)) > 0:
@@ -779,8 +793,8 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
     if len(sublabels) > 0:
         established_sublabels: set[str] = set()
         sub_label_specs: dict[str, list[SubSpec]] = {}
-        # extract distinct values, type and postfix per sublabel item and associate it with label in sub_label_spec
-        for label, discriminator, postfix, others in sublabels:
+        # extract distinct values, type , postfix, and super_label per sublabel item and associate it with label in sub_label_spec
+        for label, discriminator, postfix, super_label, others in sublabels:
             # distinct values, without None and the empty string
             distinct_values: set[Any] = set(database[label].distinct(discriminator)).difference(
                 {None, ''}
@@ -794,7 +808,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                 ):
                     # we use only the discriminator+prefix as sublabel for boolean typed discriminators
                     sub_label_spec_item = SubSpec(
-                        discriminator=discriminator, postfix=postfix, others=others, value_type=bool
+                        discriminator=discriminator, postfix=postfix, super_label=super_label, others=others, value_type=bool
                     )
                     # remember newly created (sub-)label
                     established_sublabels.add(discriminator_postfix)
@@ -802,7 +816,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     print(
                         f'sublabel {label}.{discriminator}{("" if postfix == "" else "."+postfix)} skipped'
                     )
-            elif 1 < len(distinct_values) < 150 and all(
+            elif 1 < len(distinct_values) < 300 and all(
                 isinstance(item, str) for item in distinct_values
             ):
                 distinct_values_postfix: list[str] = [str(s) + postfix for s in distinct_values]
@@ -812,6 +826,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     sub_label_spec_item = SubSpec(
                         discriminator=discriminator,
                         postfix=postfix,
+                        super_label=super_label,
                         others=others,
                         value_type=(list if (discriminator in array_fields) else str),
                         distinct_values=distinct_values,
@@ -830,6 +845,10 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     print(
                         f'sublabel {label}.{discriminator}{("" if postfix == "" else "."+postfix)} skipped'
                     )
+            elif len(distinct_values) > 150:
+                print(
+                    f'sublabel {label}.{discriminator}{("" if postfix == "" else "."+postfix)} skipped (): to many distinct values ({len(distinct_values)} > 300)'
+                )
             if sub_label_spec_item is not None:
                 if label in sub_label_specs:
                     sub_label_specs[label].append(sub_label_spec_item)
@@ -875,10 +894,14 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                             neo4j_create_index(session, verbose, label, discriminator)
                         if 'distinct_values' in sub_spec:
                             for sl in sub_spec['distinct_values']:
+                                sl_escaped = escape_neo4j_label(sl)
                                 # add sublabels
                                 labels: list[str] = [
                                     f'{l}{sub_spec["postfix"]}' for l in sl.split('#')
                                 ]
+                                # add the specified <super_label> label if any
+                                if sub_spec['super_label']:
+                                    labels.append(sub_spec['super_label'])
                                 neo4j_add_sublabel(
                                     session,
                                     verbose,
@@ -886,7 +909,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                                     apoc_installed,
                                     label,
                                     discriminator,
-                                    f"'{sl}'",
+                                    f"'{sl_escaped}'",
                                     labels,
                                     isarray,
                                 )
@@ -927,7 +950,7 @@ def main(
     simulate: bool = False,
 ) -> int:
     """The main mongo2neo4j function that takes MongoDB credential and DB name, Neo4j credentials \
-        and DB name and a specification which MongoDB collections and attributes should be \
+        and DB name and a specification which MongoDB collections and fields should be \
         transferred to Neo4j, if the Cypher queries should be printed to stdout (verbose=True) \
         and if the Neo4j engine should be connected to or not (simulate=True)."""
 
@@ -1065,7 +1088,7 @@ def console_main() -> int:  # pylint: disable=too-complex
             dest='sublabels',
             action='append',
             default=[],
-            help='List of <collection>.<attrib>[.<postfix>][,<others>] fields of type string or list of strings to create sublabels. The optional <postfix> is added to the generated sublabel and if <others> is given it is used to collect nodes without proper value.',
+            help='List of <collection>.<field>[.<postfix>][:<super_label>][,<others>] fields of type string or list of strings to create sublabels. The optional <postfix> is added to the generated sublabel, the optional <super_label> is assigned to all items and if <others> is given it is used to collect the nodes without proper value.',
         )
         mapping_group.add_argument(
             '-r',
@@ -1073,7 +1096,7 @@ def console_main() -> int:  # pylint: disable=too-complex
             dest='relations',
             action='append',
             default=[],
-            help='List of <Collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of equal str/number values',
+            help='List of <Collection>.<field>,<collection>.<field> tuples to relations between nodes of equal str/number values',
         )
         mapping_group.add_argument(
             '-lr',
@@ -1081,7 +1104,7 @@ def console_main() -> int:  # pylint: disable=too-complex
             dest='list_relations',
             action='append',
             default=[],
-            help='List of <collection>.<attrib>,<collection>.<attrib> tuples to relations between nodes of list of str/number values and str/number values',
+            help='List of <collection>.<field>,<collection>.<field> tuples to relations between nodes of list of str/number values and str/number values',
         )
 
         parser.add_argument('--conf_export', action='store_true', help='Dump config and exit')

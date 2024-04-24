@@ -17,7 +17,7 @@ authors = [
 ]
 license = {file = 'LICENSE'}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 keywords = ['MongoDB', 'Neo4j', 'Mongoose', 'SemSpect', 'exploration', 'conversion']
 classifiers = [
     "Programming Language :: Python :: 3 :: Only",
@@ -74,7 +74,7 @@ load-plugins = [
 jobs = "0"
 
 # Minimum supported python version
-py-version = "3.11"
+py-version = "3.12"
 
 # Pickle collected data for later comparisons.
 persistent = "no"
@@ -135,7 +135,7 @@ enable='''c-extension-no-member,'''
 
 [tool.mypy]
 files = ["src/mongo2neo4j/*.py"]
-python_version = "3.11"
+python_version = "3.12"
 
 # Ensure full coverage
 check_untyped_defs = true
@@ -187,8 +187,8 @@ lint.ignore = ["E402", "E501", "E741", "PLR0913", "PLR2004", "COM812", "PLR0912"
 # Exclude a variety of commonly ignored directories.
 exclude = ["dist", "build", "proto", ".pytype", ".mypy_cache", ".git"]
 
-# Assume Python 3.11
-target-version = "py311"
+# Assume Python 3.12
+target-version = "py312"
 
 
 
@@ -200,7 +200,7 @@ include = ["src/mongo2neo4j"]
 reportMissingImports = true
 reportMissingTypeStubs = false
 
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 pythonPlatform = "All"
 
 #typeCheckingMode = "strict" # "off", "basic", "strict"
