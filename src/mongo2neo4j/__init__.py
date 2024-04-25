@@ -5,6 +5,7 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v1.0.2 (04/25/2024) : back to Python 3.11
 #  v1.0.1 (04/22/2024) :
 #     - adds <super_label> to sublabel spec to play nice with SemSpects subtree facets
 #     - escapes single quites in sublabels
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
 
 __author__ = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard, Maximilian Wenzel'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 
 # Types
@@ -1096,7 +1097,7 @@ def console_main() -> int:  # pylint: disable=too-complex
             dest='relations',
             action='append',
             default=[],
-            help='List of <Collection>.<field>,<collection>.<field> tuples to relations between nodes of equal str/number values',
+            help='List of <collection>.<field>,<collection>.<field> tuples to relations between nodes of equal str/number values',
         )
         mapping_group.add_argument(
             '-lr',

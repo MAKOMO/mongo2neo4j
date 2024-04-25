@@ -44,8 +44,10 @@ The free SemSpect Graph App for Neo4j works well (see [SemSpect](https://www.sem
 
 ### Install `mongo2neo4j`
 
+Note: mongo2neo4j requires [Python 3.11](https://www.python.org/) or newer.
+
 ```sh
-% pip install mongo2neo4j
+% pip3 install mongo2neo4j
 ```
 
 ## Run the importer
