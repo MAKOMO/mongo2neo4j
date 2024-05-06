@@ -38,7 +38,7 @@ The free SemSpect Graph App for [Neo4j](https://neo4j.com/) works well (see [Sem
 ## Install `mongo2neo4j`
 
 ```sh
-% pip install mongo2neo4j
+% pip3 install mongo2neo4j
 ```
 
 # Run the importer
