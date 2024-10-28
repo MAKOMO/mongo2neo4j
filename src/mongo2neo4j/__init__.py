@@ -5,6 +5,7 @@ SemSpect <https://www.semspect.de/>.
 """
 
 # Changelog:
+#  v1.0.4 (10/28/2024) : fixes f-string mess created by pre-commit
 #  v1.0.3 (10/28/2024) : package updates
 #  v1.0.2 (04/25/2024) : back to Python 3.11
 #  v1.0.1 (04/22/2024) :
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
 
 __author__ = 'Marko Luther, Paul Holleis, Thorsten Liebig, Vincent Vialard, Maximilian Wenzel'
 __license__ = 'GPLv3 <https://www.gnu.org/licenses/gpl-3.0.html>'
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 
 # Types
@@ -465,7 +466,7 @@ def neo4j_create_index(session: None | Session, verbose: bool, label: str, field
     neo4j_run_write_query(
         session,
         verbose,
-        f'CREATE INDEX `{label.replace(' ', '_')}_{field.replace(' ', '_')}` IF NOT EXISTS FOR (l:`{label}`) ON l.`{field}`',
+        f"CREATE INDEX `{label.replace(' ', '_')}_{field.replace(' ', '_')}` IF NOT EXISTS FOR (l:`{label}`) ON l.`{field}`",
     )
 
 
@@ -474,7 +475,7 @@ def neo4j_create_constraint(session: None | Session, verbose: bool, label: str, 
     neo4j_run_write_query(
         session,
         verbose,
-        f'CREATE CONSTRAINT `{label.replace(' ', '_')}_{field.replace(' ', '_')}` IF NOT EXISTS FOR (l:`{label}`) REQUIRE l.`{field}` IS UNIQUE',
+        f"CREATE CONSTRAINT `{label.replace(' ', '_')}_{field.replace(' ', '_')}` IF NOT EXISTS FOR (l:`{label}`) REQUIRE l.`{field}` IS UNIQUE",
     )
 
 
@@ -490,9 +491,9 @@ def neo4j_add_relations(  # pylint: disable=too-many-arguments
 ) -> None:
     match_clause: str = (
         f'MATCH (a:`{source[0]}`), (b:`{target[0]}`) '
-        f'WHERE b.`{target[1]}` {'IN' if list_source else '='} a.`{source[1]}`'
+        f"WHERE b.`{target[1]}` {'IN' if list_source else '='} a.`{source[1]}`"
     )
-    create_clause: str = f'{('CREATE' if create else 'MERGE')} (a)-[:`{source[1]}`]->(b)'
+    create_clause: str = f"{('CREATE' if create else 'MERGE')} (a)-[:`{source[1]}`]->(b)"
     if apoc_installed:
         neo4j_run_write_query(
             session,
@@ -530,7 +531,7 @@ def neo4j_add_sublabel(  # pylint: disable=too-many-arguments
         else:
             match_clause = f'MATCH (n:`{label}` {{`{field}`: {value}}})'
         quoted_sublabels = [f'`{sub}`' for sub in sublabels]
-        set_clause = f'SET n:{':'.join(quoted_sublabels)}'
+        set_clause = f"SET n:{':'.join(quoted_sublabels)}"
         if apoc_installed:
             neo4j_run_write_query(
                 session,
@@ -815,7 +816,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     established_sublabels.add(discriminator_postfix)
                 else:
                     print(
-                        f'sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped'
+                        f"sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped"
                     )
             elif 1 < len(distinct_values) < 300 and all(
                 isinstance(item, str) for item in distinct_values
@@ -844,11 +845,11 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                     established_sublabels.update(new_sublabels)
                 else:
                     print(
-                        f'sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped'
+                        f"sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped"
                     )
             elif len(distinct_values) > 150:
                 print(
-                    f'sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped (): to many distinct values ({len(distinct_values)} > 300)'
+                    f"sublabel {label}.{discriminator}{('' if postfix == '' else '.'+postfix)} skipped (): to many distinct values ({len(distinct_values)} > 300)"
                 )
             if sub_label_spec_item is not None:
                 if label in sub_label_specs:
@@ -875,7 +876,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                             label,
                             discriminator,
                             'true',
-                            [f'{discriminator}{sub_spec['postfix']}'],
+                            [f"{discriminator}{sub_spec['postfix']}"],
                         )
                         neo4j_add_sublabel_other(
                             session,
@@ -898,7 +899,7 @@ def process_data(  # pylint: disable=too-complex,too-many-locals
                                 sl_escaped = escape_neo4j_label(sl)
                                 # add sublabels
                                 labels: list[str] = [
-                                    f'{l}{sub_spec['postfix']}' for l in sl.split('#')
+                                    f"{l}{sub_spec['postfix']}" for l in sl.split('#')
                                 ]
                                 # add the specified <super_label> label if any
                                 if sub_spec['super_label']:
@@ -1196,7 +1197,7 @@ def console_main() -> int:  # pylint: disable=too-complex
         )
         end = time.perf_counter()
         print(
-            f'total runtime: {str(datetime.timedelta(seconds=end-start)).split('.', maxsplit=1)[0]}'
+            f"total runtime: {str(datetime.timedelta(seconds=end-start)).split('.', maxsplit=1)[0]}"
         )
         sys.stdout.flush()
         return res
