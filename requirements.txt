@@ -1,2 +1,2 @@
-pymongo>=4.6.3
-neo4j>=5.19.0
+pymongo>=4.10.1
+neo4j>=5.25.0
